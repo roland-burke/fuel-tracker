@@ -1,0 +1,5 @@
+{
+    "authToken": "CHANGEME",
+    "port": 9008,
+    "urlPrefix": "/fuel-tracker"
+}
