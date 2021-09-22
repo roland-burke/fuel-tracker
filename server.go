@@ -54,13 +54,15 @@ func home(w http.ResponseWriter, r *http.Request) {
 
 func addRefuel(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
+
 	var refuel Refuel
 	err := decoder.Decode(&refuel)
 	if err != nil {
+		println(err.Error())
 		panic(err)
 	}
 
-	_, err = conn.Exec(context.Background(), "INSERT INTO refuel(name, date_time, price_per_liter_euro, total_liter, price_per_liter, currency) VALUES($1, $2, $3, $4, $5, $6)", refuel.Name, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency)
+	_, err = conn.Exec(context.Background(), "INSERT INTO refuel(name, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, distance) VALUES($1, $2, $3, $4, $5, $6, $7)", refuel.Name, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Distance)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -75,7 +77,7 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	_, err = conn.Exec(context.Background(), "UPDATE refuel SET name=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6 where id=$7", refuel.Name, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Id)
+	_, err = conn.Exec(context.Background(), "UPDATE refuel SET name=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, distance=$7 where id=$8", refuel.Name, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Distance, refuel.Id)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -140,9 +142,10 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 		var totalAmount float64
 		var pricePerLiter float64
 		var currency string
+		var distance float64
 		var lastChanged time.Time
 
-		err := rows.Scan(&id, &name, &dateTime, &pricePerLiterInEuro, &totalAmount, &pricePerLiter, &currency, &lastChanged)
+		err := rows.Scan(&id, &name, &dateTime, &pricePerLiterInEuro, &totalAmount, &pricePerLiter, &currency, &distance, &lastChanged)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "row next failed: %v\n", err)
 			os.Exit(1)
@@ -152,17 +155,22 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 			Id:                  id,
 			Name:                name,
 			DateTime:            dateTime,
-			PricePerLiter:       pricePerLiter,
-			TotalAmount:         totalAmount,
-			Currency:            currency,
 			PricePerLiterInEuro: pricePerLiterInEuro,
+			TotalAmount:         totalAmount,
+			PricePerLiter:       pricePerLiter,
+			Currency:            currency,
+			Distance:            distance,
 			LastChanged:         lastChanged,
 		}
 		index += 1
 		fmt.Printf("id: %d, name: %s, totalliter: %f\n", id, name, totalAmount)
 	}
 
-	reponseJson, err := json.Marshal(refuelListBuffer[:index])
+	response := RefuelResposne{
+		Refuels: refuelListBuffer[:index],
+	}
+
+	reponseJson, err := json.Marshal(response)
 
 	if err != nil {
 		log.Fatal(err)

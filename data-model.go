@@ -16,7 +16,12 @@ type Refuel struct {
 	TotalAmount         float64   `json:"totalAmount"`
 	PricePerLiter       float64   `json:"pricePerLiter"`
 	Currency            string    `json:"currency"`
+	Distance            float64   `json:"distance"`
 	LastChanged         time.Time `json:"lastChanged"`
+}
+
+type RefuelResposne struct {
+	Refuels []Refuel `json:"refuels"`
 }
 
 type Deletion struct {
