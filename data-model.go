@@ -1,6 +1,8 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 type Configuration struct {
 	AuthToken string `json:"authToken"`
