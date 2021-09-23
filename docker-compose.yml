@@ -2,11 +2,12 @@ version: '3.9'
 
 services:
   fuel-tracker-database:
-    image: postgres
+    build: "./database"
     container_name: ft-db
     environment:
       POSTGRES_PASSWORD: fj498h89fm89dhfi3
       POSTGRES_USER: postgres
+      POSTGRES_DB: fuel_tracker
       PGDATA: /data
     ports:
       - "5432:5432"
@@ -19,5 +20,7 @@ services:
     environment:
       DATABASE_URL: "postgres://postgres:fj498h89fm89dhfi3@fuel-tracker-database:5432/fuel_tracker"
     restart: "on-failure:5"
+    depends_on:
+      - fuel-tracker-database
     ports:
       - "9009:9008"

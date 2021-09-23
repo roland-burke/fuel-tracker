@@ -1,5 +1,3 @@
-CREATE DATABASE fuel_tracker OWNER postgres;
-
 CREATE OR REPLACE FUNCTION trigger_set_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
