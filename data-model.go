@@ -12,13 +12,14 @@ type Configuration struct {
 
 type Refuel struct {
 	Id                  int       `json:"id"`
-	Name                string    `json:"name"`
+	Description         string    `json:"description"`
 	DateTime            time.Time `json:"dateTime"`
 	PricePerLiterInEuro float64   `json:"pricePerLiterInEuro"`
 	TotalAmount         float64   `json:"totalAmount"`
 	PricePerLiter       float64   `json:"pricePerLiter"`
 	Currency            string    `json:"currency"`
-	Distance            float64   `json:"distance"`
+	Mileage             float64   `json:"mileage"`
+	LicensePlate        string    `json:"licensePlate"`
 	LastChanged         time.Time `json:"lastChanged"`
 }
 
