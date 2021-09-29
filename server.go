@@ -7,7 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/gorilla/mux"
 )
@@ -24,7 +23,6 @@ func startServer(port int, urlPrefix string) {
 	r.HandleFunc(fmt.Sprintf("%s/api/add", urlPrefix), addRefuel).Methods("POST")
 	r.HandleFunc(fmt.Sprintf("%s/api/delete", urlPrefix), deleteRefuel).Methods("DELETE")
 	r.HandleFunc(fmt.Sprintf("%s/api/update", urlPrefix), updateRefuel).Methods("PUT")
-	r.HandleFunc(fmt.Sprintf("%s/api/get", urlPrefix), getRefuel).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("%s/api/get/all", urlPrefix), getAllRefuels).Methods("GET")
 	r.Use(Middleware)
 
@@ -52,135 +50,144 @@ func home(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Welcome to my Homepage!")
 }
 
+func getUserIdByName(username string) int {
+	var user_id int
+	var err = conn.QueryRow(context.Background(), "SELECT users_id FROM users WHERE username=$1", username).Scan(&user_id)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return -1
+	}
+
+	return user_id
+}
+
+func checkCredentialsValid(creds *Credentials) bool {
+	var username string
+	var password string
+	var err = conn.QueryRow(context.Background(), "SELECT username, pass_key FROM users WHERE username=$1", creds.Username).Scan(&username, &password)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		return false
+	}
+
+	return username == creds.Username && password == creds.Password
+}
+
 func addRefuel(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
-	var refuel Refuel
-	err := decoder.Decode(&refuel)
+	var request DefaultRequest
+	err := decoder.Decode(&request)
 	if err != nil {
 		println(err.Error())
 		panic(err)
 	}
 
-	_, err = conn.Exec(context.Background(), "INSERT INTO refuel(description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8)", refuel.Description, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Mileage, refuel.LicensePlate)
-	if err != nil {
-		log.Fatal(err)
+	creds := Credentials{
+		Username: r.Header.Get("username"),
+		Password: r.Header.Get("password"),
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+
+	if checkCredentialsValid(&creds) {
+		refuel := request.Payload
+
+		if saveRefuelByUserId(&refuel, getUserIdByName(creds.Username)) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusCreated)
+			w.Write([]byte("created"))
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+	}
 }
 
 func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var refuel Refuel
-	err := decoder.Decode(&refuel)
+
+	var request DefaultRequest
+	err := decoder.Decode(&request)
 	if err != nil {
+		println(err.Error())
 		panic(err)
 	}
-	_, err = conn.Exec(context.Background(), "UPDATE refuel SET description=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, mileage=$7, license_plate=$8 where id=$9", refuel.Description, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Mileage, refuel.LicensePlate, refuel.Id)
-	if err != nil {
-		log.Fatal(err)
+
+	creds := Credentials{
+		Username: r.Header.Get("username"),
+		Password: r.Header.Get("password"),
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("updated"))
+
+	if checkCredentialsValid(&creds) {
+		if updateRefuelByUserId(&request.Payload, getUserIdByName(creds.Username)) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("updated"))
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+	}
 }
 
 func deleteRefuel(w http.ResponseWriter, r *http.Request) {
+
 	decoder := json.NewDecoder(r.Body)
-	var deletion Deletion
+
+	var deletion DeletionRequest
 	err := decoder.Decode(&deletion)
 	if err != nil {
+		println(err.Error())
 		panic(err)
 	}
-	_, err = conn.Exec(context.Background(), "DELETE FROM refuel WHERE id=$1", deletion.Id)
-	if err != nil {
-		log.Fatal(err)
+
+	creds := Credentials{
+		Username: r.Header.Get("username"),
+		Password: r.Header.Get("password"),
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("deleted"))
+
+	if checkCredentialsValid(&creds) {
+		if deleteRefuelByUserId(deletion.Id, getUserIdByName(creds.Username)) {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusOK)
+			w.Write([]byte("deleted"))
+		} else {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+	}
 }
 
-func getRefuel(w http.ResponseWriter, r *http.Request) {
-	refuel := Refuel{
-		Description:         "mocked data",
-		DateTime:            time.Now(),
-		PricePerLiterInEuro: 1.38,
-		TotalAmount:         45.32,
-		PricePerLiter:       1.38,
-		Currency:            "euro",
-		Mileage:             340,
-		LicensePlate:        "KNGH3483",
-	}
-
-	reponseJson, err := json.Marshal(refuel)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(reponseJson)
-
-}
 func getAllRefuels(w http.ResponseWriter, r *http.Request) {
-	var err error
-	rows, err := conn.Query(context.Background(), "SELECT * FROM refuel")
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Query failed: %v\n", err)
-		os.Exit(1)
+	creds := Credentials{
+		Username: r.Header.Get("username"),
+		Password: r.Header.Get("password"),
 	}
 
-	var refuelListBuffer [100]Refuel
+	if checkCredentialsValid(&creds) {
+		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username))
 
-	var index = 0
-
-	for rows.Next() {
-		var id int
-		var description string
-		var dateTime time.Time
-		var pricePerLiterInEuro float64
-		var totalAmount float64
-		var pricePerLiter float64
-		var currency string
-		var mileage float64
-		var licensePlate string
-		var lastChanged time.Time
-
-		err := rows.Scan(&id, &description, &dateTime, &pricePerLiterInEuro, &totalAmount, &pricePerLiter, &currency, &mileage, &licensePlate, &lastChanged)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "row next failed: %v\n", err)
-			os.Exit(1)
+			log.Fatal(err)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+		} else {
+			reponseJson, _ := json.Marshal(response)
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(reponseJson)
 		}
 
-		refuelListBuffer[index] = Refuel{
-			Id:                  id,
-			Description:         description,
-			DateTime:            dateTime,
-			PricePerLiterInEuro: pricePerLiterInEuro,
-			TotalAmount:         totalAmount,
-			PricePerLiter:       pricePerLiter,
-			Currency:            currency,
-			Mileage:             mileage,
-			LicensePlate:        licensePlate,
-			LastChanged:         lastChanged,
-		}
-		index += 1
-		fmt.Printf("id: %d, description: %s, totalliter: %f\n", id, description, totalAmount)
+	} else {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
 	}
-
-	response := RefuelResposne{
-		Refuels: refuelListBuffer[:index],
-	}
-
-	reponseJson, err := json.Marshal(response)
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(reponseJson)
-
 }

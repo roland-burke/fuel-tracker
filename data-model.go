@@ -23,10 +23,19 @@ type Refuel struct {
 	LastChanged         time.Time `json:"lastChanged"`
 }
 
+type Credentials struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 type RefuelResposne struct {
 	Refuels []Refuel `json:"refuels"`
 }
 
-type Deletion struct {
+type DefaultRequest struct {
+	Payload Refuel `json:"payload"`
+}
+
+type DeletionRequest struct {
 	Id int `json:"id"`
 }
