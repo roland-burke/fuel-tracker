@@ -38,7 +38,7 @@ func saveRefuelByUserId(refuel *Refuel, userId int) bool {
 	return true
 }
 
-func getAllRefuelsByUserId(userId int) (RefuelResposne, error) {
+func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 	var err error = nil
 	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 ORDER BY date_time DESC", userId)
 	if err != nil {
@@ -83,7 +83,7 @@ func getAllRefuelsByUserId(userId int) (RefuelResposne, error) {
 		index += 1
 	}
 
-	response := RefuelResposne{
+	response := RefuelResponse{
 		Refuels: refuelListBuffer[:index],
 	}
 

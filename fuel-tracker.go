@@ -47,30 +47,6 @@ func initDb() {
 	//defer conn.Close(context.Background())
 }
 
-/*
-func dbTest() {
-	urlExample := "postgres://postgres:fj498h89fm89dhfi3@db:5432/fuel_tracker"
-	conn, err := pgx.Connect(context.Background(), urlExample)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
-		os.Exit(1)
-	}
-	defer conn.Close(context.Background())
-
-	var name string
-	var pricePerLiterInEuro float64
-	var totalLiter float64
-	err = conn.QueryRow(context.Background(), "select price_per_liter_euro, total_liter, name from refuel where id=$1", 0).Scan(&pricePerLiterInEuro, &totalLiter, &name)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
-		os.Exit(1)
-	}
-
-	fmt.Printf("name: %s, price per liter: %f, total liter: %f", name, pricePerLiterInEuro, totalLiter)
-
-}
-*/
-
 func readConfig() Configuration {
 	file, _ := os.Open("conf.json")
 	defer file.Close()

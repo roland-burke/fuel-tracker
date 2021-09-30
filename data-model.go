@@ -28,7 +28,7 @@ type Credentials struct {
 	Password string `json:"password"`
 }
 
-type RefuelResposne struct {
+type RefuelResponse struct {
 	Refuels []Refuel `json:"refuels"`
 }
 

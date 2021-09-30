@@ -26,7 +26,7 @@ func startServer(port int, urlPrefix string) {
 	r.HandleFunc(fmt.Sprintf("%s/api/get/all", urlPrefix), getAllRefuels).Methods("GET")
 	r.Use(Middleware)
 
-	println(fmt.Sprintf("Listening on port: %d", port))
+	log.Println(fmt.Sprintf("INFO - Listening on port: %d", port))
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
