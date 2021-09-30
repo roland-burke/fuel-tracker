@@ -47,7 +47,7 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 
 	var index = 0
 
-	rows, err := conn.Query(context.Background(), "SELECT date_part('year', date_time) AS year, SUM (total_liter * price_per_liter_euro) AS cost, SUM (mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 GROUP BY year;", userId)
+	rows, err := conn.Query(context.Background(), "SELECT date_part('year', date_time) AS year, SUM (total_liter * price_per_liter_euro) AS cost, SUM (mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 GROUP BY year ORDER BY year DESC;", userId)
 	if err != nil {
 		log.Println("ERROR - Getting all reufels failed:", err)
 		return StatisticsResponse{}, err
