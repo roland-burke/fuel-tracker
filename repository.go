@@ -2,9 +2,7 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"os"
 	"strings"
 	"time"
 )
@@ -43,6 +41,7 @@ func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 ORDER BY date_time DESC", userId)
 	if err != nil {
 		log.Println("ERROR - Getting all reufels failed:", err)
+		return RefuelResponse{}, err
 	}
 
 	var refuelListBuffer [100]Refuel
@@ -64,8 +63,8 @@ func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 
 		err := rows.Scan(&id, &users_id, &description, &dateTime, &pricePerLiterInEuro, &totalAmount, &pricePerLiter, &currency, &mileage, &licensePlate, &lastChanged)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "row next failed: %v\n", err)
-			os.Exit(1)
+			log.Println("ERROR - scan single row failed:", err)
+			return RefuelResponse{}, err
 		}
 
 		refuelListBuffer[index] = Refuel{

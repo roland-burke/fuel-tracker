@@ -95,6 +95,12 @@ func getDataAndCredentials(w http.ResponseWriter, r *http.Request) (DefaultReque
 	return defaultRequest, creds, nil
 }
 
+func sendReponseWithMessageAndStatus(w http.ResponseWriter, status int, msg string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	w.Write([]byte(msg))
+}
+
 func addRefuel(w http.ResponseWriter, r *http.Request) {
 	request, creds, err := getDataAndCredentials(w, r)
 	if err != nil {
@@ -105,17 +111,14 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 		refuel := request.Payload
 
 		if saveRefuelByUserId(&refuel, getUserIdByName(creds.Username)) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("created"))
+			sendReponseWithMessageAndStatus(w, http.StatusCreated, "created")
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
 }
 
@@ -127,16 +130,13 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 
 	if checkCredentialsValid(&creds) {
 		if updateRefuelByUserId(&request.Payload, getUserIdByName(creds.Username)) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("updated"))
+			sendReponseWithMessageAndStatus(w, http.StatusOK, "updated")
 		} else {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusInternalServerError)
 		}
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
 }
 
@@ -148,8 +148,7 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&deletion)
 	if err != nil {
 		log.Println("ERROR - Decoding deletion request failed:", err.Error())
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest)
+		sendReponseWithMessageAndStatus(w, http.StatusBadRequest, "invalid delete request")
 		return
 	}
 
@@ -160,16 +159,12 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 
 	if checkCredentialsValid(&creds) {
 		if deleteRefuelByUserId(deletion.Id, getUserIdByName(creds.Username)) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("deleted"))
+			sendReponseWithMessageAndStatus(w, http.StatusOK, "deleted")
 		} else {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while deleting")
 		}
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
 }
 
@@ -181,19 +176,14 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 
 	if checkCredentialsValid(&creds) {
 		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username))
-
 		if err != nil {
-			log.Fatal(err)
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting all refuels")
 		} else {
 			reponseJson, _ := json.Marshal(response)
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(reponseJson)
 		}
-
 	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnauthorized)
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
 }
