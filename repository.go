@@ -36,6 +36,56 @@ func saveRefuelByUserId(refuel *Refuel, userId int) bool {
 	return true
 }
 
+func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
+	var err error
+	var totalCost float64
+	var totalMileage float64
+
+	err = conn.QueryRow(context.Background(), "SELECT SUM (total_liter * price_per_liter_euro) AS cost, SUM (mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1", userId).Scan(&totalCost, &totalMileage)
+
+	var statListBuffer [100]Stat
+
+	var index = 0
+
+	rows, err := conn.Query(context.Background(), "SELECT date_part('year', date_time) AS year, SUM (total_liter * price_per_liter_euro) AS cost, SUM (mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 GROUP BY year;", userId)
+	if err != nil {
+		log.Println("ERROR - Getting all reufels failed:", err)
+		return StatisticsResponse{}, err
+	}
+
+	for rows.Next() {
+		var cost float64
+		var mileage float64
+		var year int
+
+		err := rows.Scan(&year, &cost, &mileage)
+		if err != nil {
+			log.Println("ERROR - scan single row failed:", err)
+			return StatisticsResponse{}, err
+		}
+
+		statListBuffer[index] = Stat{
+			Year:    year,
+			Cost:    cost,
+			Mileage: mileage,
+		}
+		index += 1
+	}
+
+	if err != nil {
+		log.Println("ERROR - Getting statistics failed:", err)
+		return StatisticsResponse{}, err
+	}
+
+	response := StatisticsResponse{
+		Stats:        statListBuffer[:index],
+		TotalCost:    totalCost,
+		TotalMileage: totalMileage,
+	}
+
+	return response, err
+}
+
 func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 	var err error = nil
 	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 ORDER BY date_time DESC", userId)

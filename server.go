@@ -24,6 +24,7 @@ func startServer(port int, urlPrefix string) {
 	r.HandleFunc(fmt.Sprintf("%s/api/delete", urlPrefix), deleteRefuel).Methods("DELETE")
 	r.HandleFunc(fmt.Sprintf("%s/api/update", urlPrefix), updateRefuel).Methods("PUT")
 	r.HandleFunc(fmt.Sprintf("%s/api/get/all", urlPrefix), getAllRefuels).Methods("GET")
+	r.HandleFunc(fmt.Sprintf("%s/api/statistics", urlPrefix), getStatistics).Methods("GET")
 	r.Use(Middleware)
 
 	log.Println(fmt.Sprintf("INFO - Listening on port: %d", port))
@@ -99,6 +100,26 @@ func sendReponseWithMessageAndStatus(w http.ResponseWriter, status int, msg stri
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write([]byte(msg))
+}
+
+func getStatistics(w http.ResponseWriter, r *http.Request) {
+	creds := Credentials{
+		Username: r.Header.Get("username"),
+		Password: r.Header.Get("password"),
+	}
+
+	if checkCredentialsValid(&creds) {
+		response, err := getStatisticsByUserId(getUserIdByName(creds.Username))
+		if err != nil {
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting all refuels")
+		} else {
+			reponseJson, _ := json.Marshal(response)
+			w.Header().Set("Content-Type", "application/json")
+			w.Write(reponseJson)
+		}
+	} else {
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
+	}
 }
 
 func addRefuel(w http.ResponseWriter, r *http.Request) {

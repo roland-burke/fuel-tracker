@@ -23,6 +23,12 @@ type Refuel struct {
 	LastChanged         time.Time `json:"lastChanged"`
 }
 
+type Stat struct {
+	Year    int     `json:"year"`
+	Cost    float64 `json:"cost"`
+	Mileage float64 `json:"mileage"`
+}
+
 type Credentials struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -30,6 +36,12 @@ type Credentials struct {
 
 type RefuelResponse struct {
 	Refuels []Refuel `json:"refuels"`
+}
+
+type StatisticsResponse struct {
+	Stats        []Stat  `json:"stats"`
+	TotalCost    float64 `json:"totalCost"`
+	TotalMileage float64 `json:"totalMileage"`
 }
 
 type DefaultRequest struct {
