@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
@@ -32,7 +32,7 @@ func startServer(port int, urlPrefix string) {
 
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("request from:", r.RemoteAddr, r.URL)
+		log.Println("INFO - Request from:", r.RemoteAddr, r.URL)
 		var apiKey = r.Header.Get("auth")
 
 		if apiKey == authToken {
@@ -40,9 +40,9 @@ func Middleware(next http.Handler) http.Handler {
 			return
 		}
 		// No permission
-		log.Println("Invalid Auth Key: " + apiKey)
+		log.Println("ERROR - Invalid Auth Key: " + "'" + apiKey + "'")
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Acess Denied!")
+		fmt.Fprint(w, "Access Denied!")
 	})
 }
 
@@ -54,7 +54,7 @@ func getUserIdByName(username string) int {
 	var user_id int
 	var err = conn.QueryRow(context.Background(), "SELECT users_id FROM users WHERE username=$1", username).Scan(&user_id)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		log.Println("ERROR - Cannot get user id", err)
 		return -1
 	}
 
@@ -66,26 +66,39 @@ func checkCredentialsValid(creds *Credentials) bool {
 	var password string
 	var err = conn.QueryRow(context.Background(), "SELECT username, pass_key FROM users WHERE username=$1", creds.Username).Scan(&username, &password)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "QueryRow failed: %v\n", err)
+		log.Println("ERROR - Credentials check failed:", err)
 		return false
 	}
 
-	return username == creds.Username && password == creds.Password
+	var usernameEqual = strings.Compare(strings.TrimRight(username, "\n"), strings.TrimRight(creds.Username, "\n")) == 0
+	var passwordEqual = strings.Compare(strings.TrimRight(password, "\n"), strings.TrimRight(creds.Password, "\n")) == 0
+
+	return (usernameEqual && passwordEqual)
 }
 
-func addRefuel(w http.ResponseWriter, r *http.Request) {
+func getDataAndCredentials(w http.ResponseWriter, r *http.Request) (DefaultRequest, Credentials, error) {
 	decoder := json.NewDecoder(r.Body)
 
-	var request DefaultRequest
-	err := decoder.Decode(&request)
+	var defaultRequest DefaultRequest
+	err := decoder.Decode(&defaultRequest)
 	if err != nil {
-		println(err.Error())
-		panic(err)
+		log.Println("ERROR - Decoding request failed:", err.Error())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		return DefaultRequest{}, Credentials{}, err
 	}
 
 	creds := Credentials{
 		Username: r.Header.Get("username"),
 		Password: r.Header.Get("password"),
+	}
+	return defaultRequest, creds, nil
+}
+
+func addRefuel(w http.ResponseWriter, r *http.Request) {
+	request, creds, err := getDataAndCredentials(w, r)
+	if err != nil {
+		return
 	}
 
 	if checkCredentialsValid(&creds) {
@@ -102,23 +115,14 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
 
 func updateRefuel(w http.ResponseWriter, r *http.Request) {
-	decoder := json.NewDecoder(r.Body)
-
-	var request DefaultRequest
-	err := decoder.Decode(&request)
+	request, creds, err := getDataAndCredentials(w, r)
 	if err != nil {
-		println(err.Error())
-		panic(err)
-	}
-
-	creds := Credentials{
-		Username: r.Header.Get("username"),
-		Password: r.Header.Get("password"),
+		return
 	}
 
 	if checkCredentialsValid(&creds) {
@@ -132,7 +136,7 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
 
@@ -143,8 +147,10 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 	var deletion DeletionRequest
 	err := decoder.Decode(&deletion)
 	if err != nil {
-		println(err.Error())
-		panic(err)
+		log.Println("ERROR - Decoding deletion request failed:", err.Error())
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	creds := Credentials{
@@ -163,7 +169,7 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
 
@@ -188,6 +194,6 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 
 	} else {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusForbidden)
+		w.WriteHeader(http.StatusUnauthorized)
 	}
 }
