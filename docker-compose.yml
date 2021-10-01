@@ -13,6 +13,11 @@ services:
       - "5432:5432"
     volumes:
       - "../.fuel-tracker-db:/data"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   fuel-tracker-backend:
     build: "."
@@ -21,6 +26,7 @@ services:
       DATABASE_URL: "postgres://postgres:fj498h89fm89dhfi3@fuel-tracker-database:5432/fuel_tracker"
     restart: "on-failure:5"
     depends_on:
-      - fuel-tracker-database
+      fuel-tracker-database:
+        condition: service_healthy
     ports:
       - "9009:9008"
