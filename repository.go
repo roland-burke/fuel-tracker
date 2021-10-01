@@ -9,6 +9,17 @@ import (
 
 const REFUEL_TABLE_NAME = "refuel"
 
+func getUserIdByName(username string) int {
+	var user_id int
+	err := conn.QueryRow(context.Background(), "SELECT users_id FROM users WHERE username=$1", username).Scan(&user_id)
+	if err != nil {
+		log.Println("ERROR - Cannot get user id", err)
+		return -1
+	}
+
+	return user_id
+}
+
 func deleteRefuelByUserId(refuelId int, userId int) bool {
 	_, err := conn.Exec(context.Background(), "DELETE FROM "+REFUEL_TABLE_NAME+" WHERE (id=$1 AND users_id=$2)", refuelId, userId)
 	if err != nil {
@@ -30,7 +41,7 @@ func updateRefuelByUserId(refuel *Refuel, userId int) bool {
 func saveRefuelByUserId(refuel *Refuel, userId int) bool {
 	_, err := conn.Exec(context.Background(), "INSERT INTO "+REFUEL_TABLE_NAME+"(users_id, description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)", userId, refuel.Description, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Mileage, strings.ToUpper(refuel.LicensePlate))
 	if err != nil {
-		log.Println("ERROR - Saving reufel failed:", err)
+		log.Println("ERROR - Saving refuel failed:", err)
 		return false
 	}
 	return true

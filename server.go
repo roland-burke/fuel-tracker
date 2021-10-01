@@ -51,17 +51,6 @@ func home(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "Welcome to my Homepage!")
 }
 
-func getUserIdByName(username string) int {
-	var user_id int
-	var err = conn.QueryRow(context.Background(), "SELECT users_id FROM users WHERE username=$1", username).Scan(&user_id)
-	if err != nil {
-		log.Println("ERROR - Cannot get user id", err)
-		return -1
-	}
-
-	return user_id
-}
-
 func checkCredentialsValid(creds *Credentials) bool {
 	var username string
 	var password string
