@@ -29,4 +29,4 @@ services:
       fuel-tracker-database:
         condition: service_healthy
     ports:
-      - "127.0.0.1:9009:9009"
+      - "127.0.0.1:9006:9006"
