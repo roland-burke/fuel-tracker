@@ -30,3 +30,11 @@ services:
         condition: service_healthy
     ports:
       - "127.0.0.1:9006:9006"
+
+  pgadmin:
+    image: dpage/pgadmin4
+    ports:
+      - 127.0.0.1:9002:80
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=mywebserviceasdf@gmail.com
+      - PGADMIN_DEFAULT_PASSWORD=adminadminluna
