@@ -52,13 +52,16 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 	var totalCost float64
 	var totalMileage float64
 
-	err = conn.QueryRow(context.Background(), "SELECT SUM (total_liter * price_per_liter_euro) AS cost, SUM (mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1", userId).Scan(&totalCost, &totalMileage)
+	// Get total cost and mileage
+	err = conn.QueryRow(context.Background(), "SELECT SUM (total_liter * price_per_liter_euro) AS cost FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1", userId).Scan(&totalCost)
+	err = conn.QueryRow(context.Background(), "SELECT max(mileage) - min(mileage) FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1", userId).Scan(&totalMileage)
 
 	var statListBuffer [100]Stat
 
 	var index = 0
 
-	rows, err := conn.Query(context.Background(), "SELECT date_part('year', date_time) AS year, SUM (total_liter * price_per_liter_euro) AS cost, SUM (mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 GROUP BY year ORDER BY year DESC;", userId)
+	// Get cost and mileage per year
+	rows, err := conn.Query(context.Background(), "SELECT date_part('year', date_time) AS year, SUM (total_liter * price_per_liter_euro) AS cost, max(mileage) - min(mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 GROUP BY year ORDER BY year DESC;", userId)
 	if err != nil {
 		log.Println("ERROR - Getting all reufels failed:", err)
 		return StatisticsResponse{}, err
