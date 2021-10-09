@@ -5,7 +5,7 @@ services:
     build: "./database"
     container_name: ft-db
     environment:
-      POSTGRES_PASSWORD: fj498h89fm89dhfi3
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
       POSTGRES_USER: postgres
       POSTGRES_DB: fuel_tracker
       PGDATA: /data
@@ -23,7 +23,7 @@ services:
     build: "."
     container_name: ft-backend
     environment:
-      DATABASE_URL: "postgres://postgres:fj498h89fm89dhfi3@fuel-tracker-database:5432/fuel_tracker"
+      DATABASE_URL: "postgres://postgres:${PG_PASSWORD}@fuel-tracker-database:5432/fuel_tracker"
     restart: "on-failure:5"
     depends_on:
       fuel-tracker-database:

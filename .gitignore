@@ -17,3 +17,5 @@ bin/
 
 # config and auth
 conf.json
+.env.dev
+.env.prod
