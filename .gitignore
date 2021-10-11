@@ -15,6 +15,9 @@ bin/
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# special data
+db-init-prod.sql
+
 # config and auth
 conf.json
 .env.dev

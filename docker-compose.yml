@@ -6,15 +6,15 @@ services:
     container_name: ft-db
     environment:
       POSTGRES_PASSWORD: ${PG_PASSWORD}
-      POSTGRES_USER: postgres
+      POSTGRES_USER: ${PG_USERNAME}
       POSTGRES_DB: fuel_tracker
       PGDATA: /data
-    expose:
-      - "5432"
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - "../.fuel-tracker-db:/data"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U {PG_USERNAME}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,7 +23,7 @@ services:
     build: "."
     container_name: ft-backend
     environment:
-      DATABASE_URL: "postgres://postgres:${PG_PASSWORD}@fuel-tracker-database:5432/fuel_tracker"
+      DATABASE_URL: "postgres://{PG_USERNAME}:${PG_PASSWORD}@fuel-tracker-database:5432/fuel_tracker"
     restart: "on-failure:5"
     depends_on:
       fuel-tracker-database:
@@ -34,7 +34,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4
     ports:
-      - 127.0.0.1:9002:80
+      - "127.0.0.1:9002:80"
     environment:
       - PGADMIN_DEFAULT_EMAIL=mywebserviceasdf@gmail.com
-      - PGADMIN_DEFAULT_PASSWORD=adminadminluna
+      - PGADMIN_DEFAULT_PASSWORD=adminadminluna3
