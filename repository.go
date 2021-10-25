@@ -29,22 +29,27 @@ func deleteRefuelByUserId(refuelId int, userId int) bool {
 	return true
 }
 
-func updateRefuelByUserId(refuel *Refuel, userId int) bool {
-	_, err := conn.Exec(context.Background(), "UPDATE "+REFUEL_TABLE_NAME+" SET description=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, mileage=$7, license_plate=$8 where (id=$9 AND users_id=$10)", refuel.Description, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Mileage, refuel.LicensePlate, refuel.Id, userId)
-	if err != nil {
-		log.Println("ERROR - Updating reufel failed:", err)
-		return false
+func updateRefuelByUserId(refuels []Refuel, userId int) bool {
+	for i := 0; i < len(refuels); i++ {
+		_, err := conn.Exec(context.Background(), "UPDATE "+REFUEL_TABLE_NAME+" SET description=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, mileage=$7, license_plate=$8 where (id=$9 AND users_id=$10)", refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, refuels[i].LicensePlate, refuels[i].Id, userId)
+		if err != nil {
+			log.Println("ERROR - Updating reufel failed:", err)
+			return false
+		}
 	}
 	return true
 }
 
-func saveRefuelByUserId(refuel *Refuel, userId int) bool {
-	_, err := conn.Exec(context.Background(), "INSERT INTO "+REFUEL_TABLE_NAME+"(users_id, description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)", userId, refuel.Description, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Mileage, strings.ToUpper(refuel.LicensePlate))
-	if err != nil {
-		log.Println("ERROR - Saving refuel failed:", err)
-		return false
+func saveRefuelsByUserId(refuels []Refuel, userId int) bool {
+	for i := 0; i < len(refuels); i++ {
+		_, err := conn.Exec(context.Background(), "INSERT INTO "+REFUEL_TABLE_NAME+"(users_id, description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)", userId, refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, strings.ToUpper(refuels[i].LicensePlate))
+		if err != nil {
+			log.Println("ERROR - Saving refuel failed:", err)
+			return false
+		}
 	}
 	return true
+
 }
 
 func getStatisticsByUserId(userId int) (StatisticsResponse, error) {

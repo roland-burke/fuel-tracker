@@ -100,7 +100,7 @@ func getStatistics(w http.ResponseWriter, r *http.Request) {
 	if checkCredentialsValid(&creds) {
 		response, err := getStatisticsByUserId(getUserIdByName(creds.Username))
 		if err != nil {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting all refuels")
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting statistics")
 		} else {
 			reponseJson, _ := json.Marshal(response)
 			w.Header().Set("Content-Type", "application/json")
@@ -118,13 +118,10 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if checkCredentialsValid(&creds) {
-		refuel := request.Payload
-
-		if saveRefuelByUserId(&refuel, getUserIdByName(creds.Username)) {
+		if saveRefuelsByUserId(request.Payload, getUserIdByName(creds.Username)) {
 			sendReponseWithMessageAndStatus(w, http.StatusCreated, "created")
 		} else {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error")
 		}
 
 	} else {
@@ -139,11 +136,10 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if checkCredentialsValid(&creds) {
-		if updateRefuelByUserId(&request.Payload, getUserIdByName(creds.Username)) {
+		if updateRefuelByUserId(request.Payload, getUserIdByName(creds.Username)) {
 			sendReponseWithMessageAndStatus(w, http.StatusOK, "updated")
 		} else {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusInternalServerError)
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error")
 		}
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
@@ -151,7 +147,6 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteRefuel(w http.ResponseWriter, r *http.Request) {
-
 	decoder := json.NewDecoder(r.Body)
 
 	var deletion DeletionRequest

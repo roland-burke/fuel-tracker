@@ -45,7 +45,7 @@ type StatisticsResponse struct {
 }
 
 type DefaultRequest struct {
-	Payload Refuel `json:"payload"`
+	Payload []Refuel `json:"payload"`
 }
 
 type DeletionRequest struct {
