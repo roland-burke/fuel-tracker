@@ -8,6 +8,7 @@ import (
 )
 
 const REFUEL_TABLE_NAME = "refuel"
+const MAX_RESPONSE_SIZE = 50
 
 func getUserIdByName(username string) int {
 	var user_id int
@@ -113,7 +114,7 @@ func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 		return RefuelResponse{}, err
 	}
 
-	var refuelListBuffer [100]Refuel
+	var refuelListBuffer [MAX_RESPONSE_SIZE]Refuel
 
 	var index = 0
 
@@ -148,7 +149,9 @@ func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 			LicensePlate:        licensePlate,
 			LastChanged:         lastChanged,
 		}
-		index += 1
+		if index < MAX_RESPONSE_SIZE-1 {
+			index += 1
+		}
 	}
 
 	response := RefuelResponse{

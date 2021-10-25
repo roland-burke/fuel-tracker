@@ -2,12 +2,13 @@ version: '3.9'
 
 services:
   fuel-tracker-database:
-    build: "./database"
+    build:
+      context: "./database"
     container_name: ft-db
     environment:
-      POSTGRES_PASSWORD: ${PG_PASSWORD}
-      POSTGRES_USER: ${PG_USERNAME}
       POSTGRES_DB: fuel_tracker
+      POSTGRES_USER: ${PG_USERNAME}
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
       PGDATA: /data
     restart: "always"
     ports:
