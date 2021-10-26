@@ -8,7 +8,7 @@ import (
 )
 
 const REFUEL_TABLE_NAME = "refuel"
-const MAX_RESPONSE_SIZE = 50
+const MAX_RESPONSE_SIZE = 8
 
 func getUserIdByName(username string) int {
 	var user_id int
@@ -106,7 +106,7 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 	return response, err
 }
 
-func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
+func getAllRefuelsByUserId(userId int, startIndex int) (RefuelResponse, error) {
 	var err error = nil
 	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 ORDER BY date_time DESC", userId)
 	if err != nil {
@@ -117,9 +117,11 @@ func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 	var refuelListBuffer [MAX_RESPONSE_SIZE]Refuel
 
 	var index = 0
+	var counter = 0
+	var validCounter = 0
 
 	for rows.Next() {
-		var id int
+		var id int = -1
 		var users_id int
 		var description string
 		var dateTime time.Time
@@ -137,25 +139,39 @@ func getAllRefuelsByUserId(userId int) (RefuelResponse, error) {
 			return RefuelResponse{}, err
 		}
 
-		refuelListBuffer[index] = Refuel{
-			Id:                  id,
-			Description:         description,
-			DateTime:            dateTime,
-			PricePerLiterInEuro: pricePerLiterInEuro,
-			TotalAmount:         totalAmount,
-			PricePerLiter:       pricePerLiter,
-			Currency:            currency,
-			Mileage:             mileage,
-			LicensePlate:        licensePlate,
-			LastChanged:         lastChanged,
-		}
-		if index < MAX_RESPONSE_SIZE-1 {
+		if counter >= startIndex && counter < startIndex+MAX_RESPONSE_SIZE {
+			if id != -1 {
+				validCounter += 1
+			}
+			refuelListBuffer[index] = Refuel{
+				Id:                  id,
+				Description:         description,
+				DateTime:            dateTime,
+				PricePerLiterInEuro: pricePerLiterInEuro,
+				TotalAmount:         totalAmount,
+				PricePerLiter:       pricePerLiter,
+				Currency:            currency,
+				Mileage:             mileage,
+				LicensePlate:        licensePlate,
+				LastChanged:         lastChanged,
+			}
 			index += 1
 		}
+		counter += 1
 	}
 
-	response := RefuelResponse{
-		Refuels: refuelListBuffer[:index],
+	var response RefuelResponse
+
+	if validCounter < MAX_RESPONSE_SIZE {
+		response = RefuelResponse{
+			Refuels:    refuelListBuffer[:validCounter],
+			TotalCount: counter,
+		}
+	} else {
+		response = RefuelResponse{
+			Refuels:    refuelListBuffer[:MAX_RESPONSE_SIZE],
+			TotalCount: counter,
+		}
 	}
 
 	return response, err

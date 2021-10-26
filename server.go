@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -179,8 +180,22 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 		Password: r.Header.Get("password"),
 	}
 
+	keys, ok := r.URL.Query()["startIndex"]
+
+	if !ok {
+		log.Printf("Error whlie reading query params: %s", r.URL)
+	}
+
+	var startIndex int = 0
+
+	startIndex, err := strconv.Atoi(keys[0])
+
+	if err != nil {
+		log.Printf("Error whlie parsing query params: %s", keys[0])
+	}
+
 	if checkCredentialsValid(&creds) {
-		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username))
+		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username), startIndex)
 		if err != nil {
 			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting all refuels")
 		} else {

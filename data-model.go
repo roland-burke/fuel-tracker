@@ -35,7 +35,8 @@ type Credentials struct {
 }
 
 type RefuelResponse struct {
-	Refuels []Refuel `json:"refuels"`
+	Refuels    []Refuel `json:"refuels"`
+	TotalCount int      `json:"totalCount"`
 }
 
 type StatisticsResponse struct {
