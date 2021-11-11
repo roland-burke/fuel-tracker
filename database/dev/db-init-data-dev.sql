@@ -1,10 +1,3 @@
-INSERT INTO users ("username",pass_key) VALUES
-	 ('john', 'john');
-
-INSERT INTO users ("username",pass_key) VALUES
-	 ('mary', 'mary');
-
-
 INSERT INTO refuel (users_id,"description",date_time,price_per_liter_euro,total_liter,price_per_liter,"currency","mileage",license_plate) VALUES
 	 (1,'LPG Kreuzlingen','2021-09-04 13:10:25',1.439,42.0,1.488,'chf',8550,'KN-KN-9889');
 

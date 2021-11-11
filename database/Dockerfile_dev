@@ -2,5 +2,6 @@
 
 FROM postgres:latest
 
-COPY db-setup-01.sql /docker-entrypoint-initdb.d/10-init.sql
-COPY db-init-dev.sql /docker-entrypoint-initdb.d/20-init.sql
+COPY dev/db-setup-01.sql /docker-entrypoint-initdb.d/10-init.sql
+COPY dev/db-init-user-dev.sql /docker-entrypoint-initdb.d/20-init.sql
+COPY dev/db-init-data-dev.sql /docker-entrypoint-initdb.d/30-init.sql

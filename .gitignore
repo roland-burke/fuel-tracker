@@ -16,7 +16,7 @@ bin/
 # vendor/
 
 # special data
-db-init-prod.sql
+*prod.sql
 
 # config and auth
 conf.json
