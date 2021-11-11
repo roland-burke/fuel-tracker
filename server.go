@@ -180,18 +180,15 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 		Password: r.Header.Get("password"),
 	}
 
-	keys, ok := r.URL.Query()["startIndex"]
-
-	if !ok {
-		log.Printf("Error whlie reading query params: %s", r.URL)
-	}
-
 	var startIndex int = 0
+	var err error
+	keys, success := r.URL.Query()["startIndex"]
 
-	startIndex, err := strconv.Atoi(keys[0])
-
-	if err != nil {
-		log.Printf("Error whlie parsing query params: %s", keys[0])
+	if success {
+		startIndex, err = strconv.Atoi(keys[0])
+		if err != nil {
+			log.Printf("ERROR - while parsing query params: %s", keys[0])
+		}
 	}
 
 	if checkCredentialsValid(&creds) {
@@ -204,6 +201,6 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 			w.Write(reponseJson)
 		}
 	} else {
-		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "credentials check failed")
 	}
 }
