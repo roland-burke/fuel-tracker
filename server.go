@@ -181,18 +181,27 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var startIndex int = 0
-	var err error
-	keys, success := r.URL.Query()["startIndex"]
+	var licensePlate string = "ALL"
 
-	if success {
-		startIndex, err = strconv.Atoi(keys[0])
+	// 0 means all
+	var month int = 0
+	var year int = 0
+
+	var err error
+	values := r.URL.Query()
+
+	if len(values) >= 4 {
+		startIndex, err = strconv.Atoi(values["startIndex"][0])
+		licensePlate = values["licensePlate"][0]
+		month, err = strconv.Atoi(values["month"][0])
+		year, err = strconv.Atoi(values["year"][0])
 		if err != nil {
-			log.Printf("ERROR - while parsing query params: %s", keys[0])
+			log.Printf("ERROR - while parsing query params: %s", values)
 		}
 	}
 
 	if checkCredentialsValid(&creds) {
-		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username), startIndex)
+		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username), startIndex, licensePlate, month, year)
 		if err != nil {
 			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting all refuels")
 		} else {

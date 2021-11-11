@@ -106,9 +106,9 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 	return response, err
 }
 
-func getAllRefuelsByUserId(userId int, startIndex int) (RefuelResponse, error) {
+func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, month int, year int) (RefuelResponse, error) {
 	var err error = nil
-	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 ORDER BY date_time DESC", userId)
+	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 AND (($2 = 'DEFAULT') OR (license_plate = $2)) AND (($3 = 0) OR (date_part('month', date_time) = $3)) AND (($4 = 0) OR (date_part('year', date_time) = $4)) ORDER BY date_time DESC", userId, licensePlate, month, year)
 	if err != nil {
 		log.Println("ERROR - Getting all reufels failed:", err)
 		return RefuelResponse{}, err
