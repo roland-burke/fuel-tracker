@@ -5,6 +5,7 @@
 *.so
 *.dylib
 bin/
+fuel-tracker
 
 # Test binary, built with `go test -c`
 *.test

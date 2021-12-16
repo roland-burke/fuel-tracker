@@ -34,6 +34,7 @@ services:
       - "127.0.0.1:9006:9006"
 
   pgadmin:
+    container_name: ft-pgadmin
     image: dpage/pgadmin4
     restart: "always"
     ports:
