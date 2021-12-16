@@ -1,5 +1,8 @@
 # Fuel-Tracker
-This is the backend for the Fuel-Tracker App.
+This is the backend for the Fuel-Tracker App. This is only tested on Ubuntu.
+## Prerequisite
+Remote: Have a running server, with docker installed and setup and a working ssh connection<br>
+Local: Have docker installed
 ## Setup
 First you should adjust the `config/conf.template.json` file e.g.:
 ```
