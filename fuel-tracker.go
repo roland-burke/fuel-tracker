@@ -30,6 +30,10 @@ func printConfig(conf Configuration) {
 func main() {
 	var config = readConfig()
 	authToken = config.AuthToken
+	if authToken == "willbeoverwritten" || authToken == "CHANGEME" {
+		fmt.Printf("Invalid authToken: %s\nEither it wasn't changed or something went wrong!\n", authToken)
+		return
+	}
 	var port = config.Port
 	var urlPrefix = config.UrlPrefix
 	printConfig(config)
@@ -48,7 +52,7 @@ func initDb() {
 }
 
 func readConfig() Configuration {
-	file, _ := os.Open("conf.json")
+	file, _ := os.Open("config/conf.json")
 	defer file.Close()
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}

@@ -12,7 +12,7 @@ RUN go mod download
 
 # Copy files to workdir
 COPY *.go ./
-COPY config/conf.json ./
+COPY config/conf.json ./config/conf.json
 
 RUN go build
 
