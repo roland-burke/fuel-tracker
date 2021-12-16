@@ -19,7 +19,7 @@ RUN go build
 # Generate clean, final image for deployment
 FROM alpine:3.11.3
 COPY --from=builder ./app/fuel-tracker .
-COPY --from=builder ./app/conf.json .
+COPY --from=builder ./app/config/conf.json .
 
 # Executable
 ENTRYPOINT [ "./fuel-tracker" ]
