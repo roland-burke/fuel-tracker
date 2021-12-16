@@ -5,13 +5,13 @@ FROM golang:1.16-alpine as builder
 WORKDIR /app
 
 # Download necessary Go modules
-COPY go.mod ./
-COPY go.sum ./
+COPY src/go.mod ./
+COPY src/go.sum ./
 
 RUN go mod download
 
 # Copy files to workdir
-COPY *.go ./
+COPY src/*.go ./
 COPY config/conf.json ./config/conf.json
 
 RUN go build
