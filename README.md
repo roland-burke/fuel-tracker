@@ -1,8 +1,13 @@
 # Fuel-Tracker
-This is the backend for the Fuel-Tracker App. This is only tested on Ubuntu.
+This is the backend for the Fuel-Tracker App. It accepts basic CRUD requests and manages a Postgres Database. It is only tested on Ubuntu.
 ## Prerequisite
-Remote: Have a running server, with docker installed and setup and a working ssh connection<br>
-Local: Have docker installed
+For remote setup:
+* running server
+* docker installed and setup
+* working ssh connection
+
+For local setup:
+* docker installed and setup
 ## Setup
 First you should adjust the `config/conf.template.json` file e.g.:
 ```
@@ -26,6 +31,8 @@ Important: Rename the file just like the conf.json file
 ## How to run
 To run the docker startup script, you should first create a docker-remote context:<br>
 `docker context create <remote-name> ‐‐docker host=ssh://<user>@<remoteaddress>`
+
+Edit the `deploy-remote-*.sh` file and change the docker remote context name to <remote-name>
 
 After that just run `deploy-remote-prod.sh` and you should be good to go.
 For running in dev repeat the steps just for the files with dev extension instead of prod.
