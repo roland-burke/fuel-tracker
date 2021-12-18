@@ -1,2 +1,6 @@
 #!/bin/bash
-docker-compose --context the-machine --env-file docker/.env.dev -f docker-compose.yml -f docker/docker-compose.dev.yml up -d --build --force-recreate
+REMOTE_CONTEXT_NAME=the-machine
+ENV_FILE=docker/.env.dev
+COMPOSE_FILE=docker/docker-compose.dev.yml
+
+docker-compose --context $REMOTE_CONTEXT_NAME --env-file $ENV_FILE -f docker-compose.yml -f $COMPOSE_FILE up -d --build --force-recreate
