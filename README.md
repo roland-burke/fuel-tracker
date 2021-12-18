@@ -31,7 +31,7 @@ PG_ADMIN_PASSWORD=<my_pgadmin_password>
 To run the docker startup script, you should first create a docker-remote context:<br>
 `docker context create <remote_name> ‐‐docker host=ssh://<user>@<remote_address>`
 
-Edit the `deploy-remote-*.sh` file and change the docker remote context name to <remote_name>
+Edit the `deploy-remote.sh` file and change the docker remote context name to <remote_name>
 
-After that just run `deploy-remote-prod.sh` and you should be good to go.
+After that just run `deploy-remote.sh prod` and you should be good to go.
 For running in dev repeat the steps just for the files with dev extension instead of prod.
