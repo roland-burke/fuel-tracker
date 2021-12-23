@@ -20,6 +20,7 @@ fuel-tracker
 *prod.sql
 
 # config and auth
-conf.json
+conf.dev.json
+conf.prod.json
 .env.dev
 .env.prod

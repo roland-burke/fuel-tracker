@@ -10,7 +10,8 @@ import (
 	"github.com/jackc/pgx/v4"
 )
 
-var authToken = "willbeoverwritten"
+var confPath = "conf.json"
+var apiKey = "willbeoverwritten"
 var conn *pgx.Conn
 
 func convertJsonObjectToString(object interface{}) string {
@@ -29,9 +30,9 @@ func printConfig(conf Configuration) {
 
 func main() {
 	var config = readConfig()
-	authToken = config.AuthToken
-	if authToken == "willbeoverwritten" || authToken == "CHANGEME" {
-		fmt.Printf("Invalid authToken: %s\nEither it wasn't changed or something went wrong!\n", authToken)
+	apiKey = config.ApiKey
+	if apiKey == "willbeoverwritten" || apiKey == "CHANGEME" {
+		fmt.Printf("Invalid Apikey: %s\nEither it wasn't changed or something went wrong!\n", apiKey)
 		return
 	}
 	var port = config.Port
@@ -43,22 +44,27 @@ func main() {
 
 func initDb() {
 	var err error
+	fmt.Printf("db url: %s\n", os.Getenv("DATABASE_URL"))
 	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
 		os.Exit(1)
 	}
-	//defer conn.Close(context.Background())
 }
 
 func readConfig() Configuration {
-	file, _ := os.Open("config/conf.json")
+	file, err := os.Open(confPath)
 	defer file.Close()
+
+	if err != nil {
+		log.Fatalf("ERROR - Cannot open config file from '%s': %s", confPath, err)
+	}
+
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}
-	err := decoder.Decode(&configuration)
+	err = decoder.Decode(&configuration)
 	if err != nil {
-		log.Fatal("Error while reading config:", err)
+		log.Fatal("ERROR - can't decode config: ", err)
 	}
 	return configuration
 }

@@ -5,7 +5,7 @@ import (
 )
 
 type Configuration struct {
-	AuthToken string `json:"authToken"`
+	ApiKey    string `json:"apiKey"`
 	Port      int    `json:"port"`
 	UrlPrefix string `json:"urlPrefix"`
 }

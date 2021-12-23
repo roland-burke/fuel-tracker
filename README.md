@@ -12,7 +12,7 @@ For local setup:
 First you should adjust the `config/conf.template.json` file e.g.:
 ```
 {
-    "authToken": "<your_auth_token>",
+    "apiKey": "<your_auth_token>",
     "port": 9006,
     "urlPrefix": "/fuel-tracker"
 }

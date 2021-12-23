@@ -35,14 +35,14 @@ func startServer(port int, urlPrefix string) {
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		log.Println("INFO - Request from:", r.RemoteAddr, r.URL)
-		var apiKey = r.Header.Get("auth")
+		var apiKeyFromClient = r.Header.Get("auth")
 
-		if apiKey == authToken {
+		if apiKeyFromClient == apiKey {
 			next.ServeHTTP(w, r)
 			return
 		}
 		// No permission
-		log.Println("ERROR - Invalid Auth Key: " + "'" + apiKey + "'")
+		log.Println("ERROR - Invalid Apikey: " + "'" + apiKeyFromClient + "'")
 		w.WriteHeader(http.StatusUnauthorized)
 		fmt.Fprint(w, "Access Denied!")
 	})
