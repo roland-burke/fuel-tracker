@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS refuel (
-    id                      SERIAL NOT NULL PRIMARY key,
+    id                      SERIAL NOT NULL,
     users_id                int,
     description             varchar(50) NOT NULL,
     date_time               timestamp NOT NULL,
@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS refuel (
     mileage                 float8 NOT NULL constraint mileage_not_negative_or_zero CHECK (mileage > 0),
     license_plate           varchar(15) NOT NULL,
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+	PRIMARY KEY (id, license_plate, mileage)
     constraint fk_users foreign key(users_id) references users(users_id)
 );
 
