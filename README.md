@@ -35,4 +35,5 @@ Edit the `deploy.sh` file and change the docker remote context name to <remote_n
 
 After that just run `deploy.sh prod` and you should be good to go.
 For running in dev repeat the steps just for the files with dev extension instead of prod.
+
 **Important**: Replace the config name which will be loaded in the Dockerfile
