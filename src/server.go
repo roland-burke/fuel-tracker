@@ -120,9 +120,9 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 
 	if checkCredentialsValid(&creds) {
 		if saveRefuelsByUserId(request.Payload, getUserIdByName(creds.Username)) {
-			sendReponseWithMessageAndStatus(w, http.StatusCreated, "created")
+			sendReponseWithMessageAndStatus(w, http.StatusCreated, "Successfully added")
 		} else {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error")
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error")
 		}
 
 	} else {
@@ -138,9 +138,9 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 
 	if checkCredentialsValid(&creds) {
 		if updateRefuelByUserId(request.Payload, getUserIdByName(creds.Username)) {
-			sendReponseWithMessageAndStatus(w, http.StatusOK, "updated")
+			sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully updated")
 		} else {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error")
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error")
 		}
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
@@ -165,9 +165,9 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 
 	if checkCredentialsValid(&creds) {
 		if deleteRefuelByUserId(deletion.Id, getUserIdByName(creds.Username)) {
-			sendReponseWithMessageAndStatus(w, http.StatusOK, "deleted")
+			sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully deleted")
 		} else {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while deleting")
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error cannot delete")
 		}
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
@@ -203,13 +203,13 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 	if checkCredentialsValid(&creds) {
 		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username), startIndex, licensePlate, month, year)
 		if err != nil {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting all refuels")
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error cannot get all refuels")
 		} else {
 			reponseJson, _ := json.Marshal(response)
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(reponseJson)
 		}
 	} else {
-		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "credentials check failed")
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials check failed")
 	}
 }
