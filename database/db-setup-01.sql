@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+CREATE FUNCTION trigger_set_timestamp()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE TABLE IF NOT EXISTS refuel (
-    id                      SERIAL NOT NULL,
+    id                      SERIAL UNIQUE NOT NULL,
     users_id                int,
     description             varchar(50) NOT NULL,
     date_time               timestamp NOT NULL constraint realistic_date

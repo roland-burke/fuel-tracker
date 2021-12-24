@@ -44,7 +44,7 @@ func Middleware(next http.Handler) http.Handler {
 		// No permission
 		log.Println("ERROR - Invalid Apikey: " + "'" + apiKeyFromClient + "'")
 		w.WriteHeader(http.StatusUnauthorized)
-		fmt.Fprint(w, "Access Denied!")
+		fmt.Fprint(w, "API access denied!")
 	})
 }
 
@@ -67,6 +67,14 @@ func checkCredentialsValid(creds *Credentials) bool {
 	return (usernameEqual && passwordEqual)
 }
 
+func getCredentials(r *http.Request) Credentials {
+	creds := Credentials{
+		Username: r.Header.Get("username"),
+		Password: r.Header.Get("password"),
+	}
+	return creds
+}
+
 func getDataAndCredentials(w http.ResponseWriter, r *http.Request) (DefaultRequest, Credentials, error) {
 	decoder := json.NewDecoder(r.Body)
 
@@ -79,10 +87,7 @@ func getDataAndCredentials(w http.ResponseWriter, r *http.Request) (DefaultReque
 		return DefaultRequest{}, Credentials{}, err
 	}
 
-	creds := Credentials{
-		Username: r.Header.Get("username"),
-		Password: r.Header.Get("password"),
-	}
+	creds := getCredentials(r)
 	return defaultRequest, creds, nil
 }
 
@@ -93,20 +98,17 @@ func sendReponseWithMessageAndStatus(w http.ResponseWriter, status int, msg stri
 }
 
 func getStatistics(w http.ResponseWriter, r *http.Request) {
-	creds := Credentials{
-		Username: r.Header.Get("username"),
-		Password: r.Header.Get("password"),
-	}
+	creds := getCredentials(r)
 
 	if checkCredentialsValid(&creds) {
 		response, err := getStatisticsByUserId(getUserIdByName(creds.Username))
 		if err != nil {
 			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting statistics")
-		} else {
-			reponseJson, _ := json.Marshal(response)
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(reponseJson)
+			return
 		}
+		reponseJson, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(reponseJson)
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
@@ -115,16 +117,17 @@ func getStatistics(w http.ResponseWriter, r *http.Request) {
 func addRefuel(w http.ResponseWriter, r *http.Request) {
 	request, creds, err := getDataAndCredentials(w, r)
 	if err != nil {
+		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	if checkCredentialsValid(&creds) {
-		if saveRefuelsByUserId(request.Payload, getUserIdByName(creds.Username)) {
-			sendReponseWithMessageAndStatus(w, http.StatusCreated, "Successfully added")
-		} else {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error")
+		err := saveRefuelsByUserId(request.Payload, getUserIdByName(creds.Username))
+		if err != nil {
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+			return
 		}
-
+		sendReponseWithMessageAndStatus(w, http.StatusCreated, "Successfully added")
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
@@ -133,15 +136,17 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	request, creds, err := getDataAndCredentials(w, r)
 	if err != nil {
+		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	if checkCredentialsValid(&creds) {
-		if updateRefuelByUserId(request.Payload, getUserIdByName(creds.Username)) {
-			sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully updated")
-		} else {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error")
+		err := updateRefuelByUserId(request.Payload, getUserIdByName(creds.Username))
+		if err != nil {
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+			return
 		}
+		sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully updated")
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
@@ -158,27 +163,22 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	creds := Credentials{
-		Username: r.Header.Get("username"),
-		Password: r.Header.Get("password"),
-	}
+	creds := getCredentials(r)
 
 	if checkCredentialsValid(&creds) {
-		if deleteRefuelByUserId(deletion.Id, getUserIdByName(creds.Username)) {
+		err := deleteRefuelByUserId(deletion.Id, getUserIdByName(creds.Username))
+		if err != nil {
 			sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully deleted")
-		} else {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error cannot delete")
+			return
 		}
+		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
 }
 
 func getAllRefuels(w http.ResponseWriter, r *http.Request) {
-	creds := Credentials{
-		Username: r.Header.Get("username"),
-		Password: r.Header.Get("password"),
-	}
+	creds := getCredentials(r)
 
 	var startIndex int = 0
 	var licensePlate string = "ALL"
@@ -203,13 +203,13 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 	if checkCredentialsValid(&creds) {
 		response, err := getAllRefuelsByUserId(getUserIdByName(creds.Username), startIndex, licensePlate, month, year)
 		if err != nil {
-			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error cannot get all refuels")
-		} else {
-			reponseJson, _ := json.Marshal(response)
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(reponseJson)
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+			return
 		}
+		reponseJson, _ := json.Marshal(response)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(reponseJson)
 	} else {
-		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials check failed")
+		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}
 }

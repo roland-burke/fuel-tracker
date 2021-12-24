@@ -21,35 +21,35 @@ func getUserIdByName(username string) int {
 	return user_id
 }
 
-func deleteRefuelByUserId(refuelId int, userId int) bool {
+func deleteRefuelByUserId(refuelId int, userId int) error {
 	_, err := conn.Exec(context.Background(), "DELETE FROM "+REFUEL_TABLE_NAME+" WHERE (id=$1 AND users_id=$2)", refuelId, userId)
 	if err != nil {
 		log.Println("ERROR - Deleting reufel failed:", err)
-		return false
+		return err
 	}
-	return true
+	return nil
 }
 
-func updateRefuelByUserId(refuels []Refuel, userId int) bool {
+func updateRefuelByUserId(refuels []Refuel, userId int) error {
 	for i := 0; i < len(refuels); i++ {
 		_, err := conn.Exec(context.Background(), "UPDATE "+REFUEL_TABLE_NAME+" SET description=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, mileage=$7, license_plate=$8 where (id=$9 AND users_id=$10)", refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, refuels[i].LicensePlate, refuels[i].Id, userId)
 		if err != nil {
 			log.Println("ERROR - Updating reufel failed:", err)
-			return false
+			return err
 		}
 	}
-	return true
+	return nil
 }
 
-func saveRefuelsByUserId(refuels []Refuel, userId int) bool {
+func saveRefuelsByUserId(refuels []Refuel, userId int) error {
 	for i := 0; i < len(refuels); i++ {
 		_, err := conn.Exec(context.Background(), "INSERT INTO "+REFUEL_TABLE_NAME+"(users_id, description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)", userId, refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, strings.ToUpper(refuels[i].LicensePlate))
 		if err != nil {
 			log.Println("ERROR - Saving refuel failed:", err)
-			return false
+			return err
 		}
 	}
-	return true
+	return nil
 
 }
 
