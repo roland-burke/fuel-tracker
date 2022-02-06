@@ -12,6 +12,9 @@ import (
 
 var confPath = "conf.json"
 var apiKey = "willbeoverwritten"
+
+const API_KEY_MIN_LENGTH = 12
+
 var conn *pgx.Conn
 
 func convertJsonObjectToString(object interface{}) string {
@@ -23,9 +26,10 @@ func convertJsonObjectToString(object interface{}) string {
 }
 
 func printConfig(conf Configuration) {
+	// Only show first 5 Characters of api key
+	conf.ApiKey = conf.ApiKey[:len(conf.ApiKey)-(len(conf.ApiKey)-5)] + "..."
 	fmt.Println("Configuration loaded:")
 	fmt.Println(convertJsonObjectToString(conf))
-	fmt.Println("============================================")
 }
 
 func main() {
@@ -34,17 +38,20 @@ func main() {
 	if apiKey == "willbeoverwritten" || apiKey == "CHANGEME" {
 		fmt.Printf("Invalid Apikey: %s\nEither it wasn't changed or something went wrong!\n", apiKey)
 		return
+	} else if len(apiKey) < API_KEY_MIN_LENGTH {
+		fmt.Printf("Apikey too short: %s\nMust be at least %d characters long!\n", apiKey, API_KEY_MIN_LENGTH)
+		return
 	}
 	var port = config.Port
 	var urlPrefix = config.UrlPrefix
 	printConfig(config)
 	initDb()
+	fmt.Printf("=======================================================\n\n")
 	startServer(port, urlPrefix)
 }
 
 func initDb() {
 	var err error
-	fmt.Printf("db url: %s\n", os.Getenv("DATABASE_URL"))
 	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Unable to connect to database: %v\n", err)
