@@ -168,10 +168,10 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 	if checkCredentialsValid(&creds) {
 		err := deleteRefuelByUserId(deletion.Id, getUserIdByName(creds.Username))
 		if err != nil {
-			sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully deleted")
+			sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 			return
 		}
-		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+		sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully deleted")
 	} else {
 		sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "invalid credentials")
 	}

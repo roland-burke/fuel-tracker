@@ -27,7 +27,7 @@ func deleteRefuelByUserId(refuelId int, userId int) error {
 		log.Println("ERROR - Deleting reufel failed:", err)
 		return err
 	}
-	return nil
+	return err
 }
 
 func updateRefuelByUserId(refuels []Refuel, userId int) error {
