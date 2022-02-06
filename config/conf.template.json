@@ -1,4 +1,5 @@
 {
+    "description": "template",
     "apiKey": "CHANGEME",
     "port": 9008,
     "urlPrefix": "/fuel-tracker"

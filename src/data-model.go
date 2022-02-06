@@ -5,9 +5,10 @@ import (
 )
 
 type Configuration struct {
-	ApiKey    string `json:"apiKey"`
-	Port      int    `json:"port"`
-	UrlPrefix string `json:"urlPrefix"`
+	Description string `json:"description"`
+	ApiKey      string `json:"apiKey"`
+	Port        int    `json:"port"`
+	UrlPrefix   string `json:"urlPrefix"`
 }
 
 type Refuel struct {
