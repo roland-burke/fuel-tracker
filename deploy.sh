@@ -12,7 +12,8 @@ DEV_COMPOSE_FILE=docker/docker-compose.dev.yml
 
 run_docker_compose_remote() 
 {
-    docker-compose --context $1 --env-file $2 -f docker-compose.yml -f $3 up -d --build --force-recreate
+	docker-compose --context $1 --env-file $2 -f docker-compose.yml -f $3 build --no-cache
+    docker-compose --context $1 --env-file $2 -f docker-compose.yml -f $3 up -d --force-recreate
 }
 
 run_docker_compose_local() 
@@ -21,19 +22,18 @@ run_docker_compose_local()
     docker-compose --env-file $1 -f docker-compose.yml -f $2 up -d --build --force-recreate
 }
 
-if [[ "$2" = "clean" ]]
-then
-	echo "clean local:"
-	rm -rf ../.fuel-tracker-db
-fi
-
 # === REMOTE ===
 if [[ "$1" = "prod" ]]
 then
 	run_docker_compose_remote $REMOTE_CONTEXT_NAME $PROD_ENV_FILE $PROD_COMPOSE_FILE
-elif [[ "$1" = "dev" ]]
 # === LOCAL ===
+elif [[ "$1" = "dev" ]]
 then
+	if [[ "$2" = "clean" ]]
+	then
+		echo "clean local:"
+		rm -rf ../.fuel-tracker-db
+	fi
 	run_docker_compose_local $DEV_ENV_FILE $DEV_COMPOSE_FILE
 else
 	echo "Usage: $FILENAME <prod|dev>"
