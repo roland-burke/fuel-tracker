@@ -23,9 +23,6 @@ then
 		echo "clean local:"
 		rm -rf ../.fuel-tracker-db
 	fi
-	# remove old image
-	#docker image prune --force --filter label=stage=deploy
-
 	# build new image
 	docker-compose --env-file $DEV_ENV_FILE build --no-cache --build-arg configFilePath=$DEV_BACKEND_CONFIG --build-arg userInitFilePath="./dev/db-init-user-dev.sql" --build-arg dataInitFilePath="./dev/db-init-data-dev.sql"
 
