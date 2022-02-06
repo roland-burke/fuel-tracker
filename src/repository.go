@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"math"
 	"strings"
 	"time"
 )
@@ -72,7 +73,7 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 		return StatisticsResponse{}, err
 	}
 
-	rows.Close()
+	defer rows.Close()
 
 	for rows.Next() {
 		var cost float64
@@ -100,8 +101,8 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 
 	response := StatisticsResponse{
 		Stats:        statListBuffer[:index],
-		TotalCost:    totalCost,
-		TotalMileage: totalMileage,
+		TotalCost:    math.Round(totalCost*100) / 100,
+		TotalMileage: math.Round(totalMileage*100) / 100, // Round to the 2. decimal place
 	}
 
 	return response, err
