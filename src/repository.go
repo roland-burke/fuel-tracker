@@ -27,7 +27,7 @@ func deleteRefuelByUserId(refuelId int, userId int) error {
 		log.Println("ERROR - Deleting reufel failed:", err)
 		return err
 	}
-	return err
+	return nil
 }
 
 func updateRefuelByUserId(refuels []Refuel, userId int) error {
@@ -50,7 +50,6 @@ func saveRefuelsByUserId(refuels []Refuel, userId int) error {
 		}
 	}
 	return nil
-
 }
 
 func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
@@ -72,6 +71,8 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 		log.Println("ERROR - Getting all reufels failed:", err)
 		return StatisticsResponse{}, err
 	}
+
+	rows.Close()
 
 	for rows.Next() {
 		var cost float64
@@ -113,6 +114,8 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 		log.Println("ERROR - Getting all reufels failed:", err)
 		return RefuelResponse{}, err
 	}
+
+	defer rows.Close()
 
 	var refuelListBuffer [MAX_RESPONSE_SIZE]Refuel
 
