@@ -1,42 +1,40 @@
 #!/bin/bash
 
 FILENAME=`basename "$0"`
+REMOTE_CONTEXT_NAME="the-machine"
 
-REMOTE_CONTEXT_NAME=the-machine
+PROD_ENV_FILE="docker/.env.prod"
+PROD_BACKEND_CONFIG="conf.prod.json"
 
-PROD_ENV_FILE=docker/.env.prod
-PROD_COMPOSE_FILE=docker/docker-compose.prod.yml
-
-DEV_ENV_FILE=docker/.env.dev
-DEV_COMPOSE_FILE=docker/docker-compose.dev.yml
-
-run_docker_compose_remote() 
-{
-	docker-compose --context $1 --env-file $2 -f docker-compose.yml -f $3 build --no-cache
-    docker-compose --context $1 --env-file $2 -f docker-compose.yml -f $3 up -d --force-recreate
-}
-
-run_docker_compose_local() 
-{
-	echo $1
-    docker-compose --env-file $1 -f docker-compose.yml -f $2 up -d --build --force-recreate
-}
+DEV_ENV_FILE="docker/.env.dev"
+DEV_BACKEND_CONFIG="conf.dev.json"
 
 # === REMOTE ===
-if [[ "$1" = "prod" ]]
+if [[ "$1" = "remote" ]]
 then
-	run_docker_compose_remote $REMOTE_CONTEXT_NAME $PROD_ENV_FILE $PROD_COMPOSE_FILE
+	docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE build --no-cache --build-arg configFilePath=$PROD_BACKEND_CONFIG --build-arg userInitFilePath="./prod/db-init-user-dev.sql" --build-arg dataInitFilePath="./prod/db-init-data-dev.sql"
+    docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE up -d --force-recreate
+
 # === LOCAL ===
-elif [[ "$1" = "dev" ]]
+elif [[ "$1" = "local" ]]
 then
 	if [[ "$2" = "clean" ]]
 	then
 		echo "clean local:"
 		rm -rf ../.fuel-tracker-db
 	fi
-	run_docker_compose_local $DEV_ENV_FILE $DEV_COMPOSE_FILE
+	# remove old image
+	#docker image prune --force --filter label=stage=deploy
+
+	# build new image
+	docker-compose --env-file $DEV_ENV_FILE build --no-cache --build-arg configFilePath=$DEV_BACKEND_CONFIG --build-arg userInitFilePath="./dev/db-init-user-dev.sql" --build-arg dataInitFilePath="./dev/db-init-data-dev.sql"
+
+	# remove builder image
+	docker image prune --force --filter label=stage=builder
+
+	docker-compose --env-file $DEV_ENV_FILE up -d --force-recreate
 else
-	echo "Usage: $FILENAME <prod|dev>"
+	echo "Usage: $FILENAME <remote|local>"
 	exit 0
 fi
 
