@@ -18,10 +18,10 @@ dateCount int;
 BEGIN
 -- trigger logic
 
-SELECT count(*) INTO mileageCount FROM refuel WHERE mileage > NEW.mileage AND users_id = NEW.users_id;
-SELECT count(*) INTO dateCount FROM refuel WHERE date_time > NEW.date_time AND users_id = NEW.users_id;
+SELECT count(*) INTO mileageCount FROM refuel WHERE mileage > NEW.mileage AND users_id = NEW.users_id AND license_plate = NEW.license_plate;
+SELECT count(*) INTO dateCount FROM refuel WHERE date_time >= NEW.date_time AND users_id = NEW.users_id AND license_plate = NEW.license_plate;
 
-	IF mileageCount != dateCount THEN
+	IF mileageCount > dateCount THEN
 		RAISE EXCEPTION 'Mileage has already been reached'; 
 	END IF;
 		RETURN NEW;
