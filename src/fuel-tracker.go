@@ -71,7 +71,7 @@ func readConfig() Configuration {
 	configuration := Configuration{}
 	err = decoder.Decode(&configuration)
 	if err != nil {
-		log.Fatal("ERROR - can't decode config: ", err)
+		log.Fatal("ERROR - cannot decode config: ", err)
 	}
 	return configuration
 }

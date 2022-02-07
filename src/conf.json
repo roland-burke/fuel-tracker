@@ -1,0 +1,6 @@
+{
+    "description": "testing",
+    "apiKey": "apikey",
+    "port": 9008,
+    "urlPrefix": "/fuel-tracker"
+}
