@@ -1,4 +1,4 @@
-# Fuel-Tracker
+# Fuel-Tracker ![Build Status](https://github.com/roland-burke/fuel-tracker/actions/workflows/simple-workflow.yml/badge.svg)
 This is the backend for the Fuel-Tracker App. It accepts basic HTTP requests and manages a Postgres Database. The setup is only tested on Linux.
 ## Prerequisite
 For remote setup:
