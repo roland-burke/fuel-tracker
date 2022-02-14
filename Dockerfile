@@ -18,9 +18,6 @@ RUN go mod download
 COPY src/*.go ./
 COPY config/${configFilePath} config/conf.json
 
-RUN pwd
-RUN ls config
-
 RUN go build
 
 # Generate clean, final image for deployment
