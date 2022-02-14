@@ -80,6 +80,16 @@ github.com/mattn/go-isatty v0.0.12/go.mod h1:cbi8OIDigv2wuxKPP5vlRcQ1OAZbq2CE4Ky
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
+github.com/roland-burke/rollogger v0.0.0-20220210075315-223202c4f3f4 h1:99imufhzfTmva64/hqtkbv2i7jVRF8LId7g6hxUSxjo=
+github.com/roland-burke/rollogger v0.0.0-20220210075315-223202c4f3f4/go.mod h1:Qtf4SlQ4KYxm0nyipLVszrNKjab4O2/A75n49mmtefg=
+github.com/roland-burke/rollogger v0.0.0-20220210080947-6d5a91eed005 h1:ApDqodftTuaeSGc2oMHsyMEsLZ6JtrmaXF6wLOqscec=
+github.com/roland-burke/rollogger v0.0.0-20220210080947-6d5a91eed005/go.mod h1:Qtf4SlQ4KYxm0nyipLVszrNKjab4O2/A75n49mmtefg=
+github.com/roland-burke/rollogger v0.0.0-20220210084010-2004b4f387e6 h1:ol8x9Doe/Mwx3c6aKSyuOAlYpzYdyk2AT4SMmhYcSbs=
+github.com/roland-burke/rollogger v0.0.0-20220210084010-2004b4f387e6/go.mod h1:Qtf4SlQ4KYxm0nyipLVszrNKjab4O2/A75n49mmtefg=
+github.com/roland-burke/rollogger v0.0.0-20220210084422-3e04348ec445 h1:GcGqIaMc0nFQwCAFHmsJvyjYsZet3SK62GyTZQ7TpfY=
+github.com/roland-burke/rollogger v0.0.0-20220210084422-3e04348ec445/go.mod h1:Qtf4SlQ4KYxm0nyipLVszrNKjab4O2/A75n49mmtefg=
+github.com/roland-burke/rollogger v1.0.1 h1:0+dw5rCerWwdK+DLBDfZkNfEd6pe3uXr/veH08XWZr4=
+github.com/roland-burke/rollogger v1.0.1/go.mod h1:Qtf4SlQ4KYxm0nyipLVszrNKjab4O2/A75n49mmtefg=
 github.com/rs/xid v1.2.1/go.mod h1:+uKXf+4Djp6Md1KODXJxgGQPKngRmWyn10oCKFzNHOQ=
 github.com/rs/zerolog v1.13.0/go.mod h1:YbFCdg8HfsridGWAh22vktObvhZbQsZXe4/zB0OKkWU=
 github.com/rs/zerolog v1.15.0/go.mod h1:xYTKnLHcpfU2225ny5qZjxnj9NvkumZYjJHlAThCjNc=

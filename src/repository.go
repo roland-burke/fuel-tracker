@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"math"
 	"strings"
 	"time"
@@ -15,7 +14,7 @@ func getUserIdByName(username string) int {
 	var user_id int
 	err := conn.QueryRow(context.Background(), "SELECT users_id FROM users WHERE username=$1", username).Scan(&user_id)
 	if err != nil {
-		log.Println("ERROR - Cannot get user id", err)
+		logger.Error("Cannot get user id: %s", err.Error())
 		return -1
 	}
 
@@ -25,7 +24,7 @@ func getUserIdByName(username string) int {
 func deleteRefuelByUserId(refuelId int, userId int) error {
 	_, err := conn.Exec(context.Background(), "DELETE FROM "+REFUEL_TABLE_NAME+" WHERE (id=$1 AND users_id=$2)", refuelId, userId)
 	if err != nil {
-		log.Println("ERROR - Deleting reufel failed:", err)
+		logger.Error("Deleting reufel failed: %s", err.Error())
 		return err
 	}
 	return nil
@@ -35,7 +34,7 @@ func updateRefuelByUserId(refuels []Refuel, userId int) error {
 	for i := 0; i < len(refuels); i++ {
 		_, err := conn.Exec(context.Background(), "UPDATE "+REFUEL_TABLE_NAME+" SET description=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, mileage=$7, license_plate=$8 where (id=$9 AND users_id=$10)", refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, refuels[i].LicensePlate, refuels[i].Id, userId)
 		if err != nil {
-			log.Println("ERROR - Updating reufel failed:", err)
+			logger.Error("Updating reufel failed: %s", err.Error())
 			return err
 		}
 	}
@@ -46,7 +45,7 @@ func saveRefuelsByUserId(refuels []Refuel, userId int) error {
 	for i := 0; i < len(refuels); i++ {
 		_, err := conn.Exec(context.Background(), "INSERT INTO "+REFUEL_TABLE_NAME+"(users_id, description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)", userId, refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, strings.ToUpper(refuels[i].LicensePlate))
 		if err != nil {
-			log.Println("ERROR - Saving refuel failed:", err)
+			logger.Error("Saving refuel failed: %s", err.Error())
 			return err
 		}
 	}
@@ -69,7 +68,7 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 	// Get cost and mileage per year
 	rows, err := conn.Query(context.Background(), "SELECT date_part('year', date_time) AS year, SUM (total_liter * price_per_liter_euro) AS cost, max(mileage) - min(mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 GROUP BY year ORDER BY year DESC;", userId)
 	if err != nil {
-		log.Println("ERROR - Getting all reufels failed:", err)
+		logger.Error("Getting all reufels failed: %s", err.Error())
 		return StatisticsResponse{}, err
 	}
 
@@ -82,7 +81,7 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 
 		err := rows.Scan(&year, &cost, &mileage)
 		if err != nil {
-			log.Println("ERROR - scan single row failed:", err)
+			logger.Error("Scanning single row failed: %s", err.Error())
 			return StatisticsResponse{}, err
 		}
 
@@ -95,7 +94,7 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 	}
 
 	if err != nil {
-		log.Println("ERROR - Getting statistics failed:", err)
+		logger.Error("Getting statistics failed: %s", err.Error())
 		return StatisticsResponse{}, err
 	}
 
@@ -112,7 +111,7 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 	var err error = nil
 	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 AND (($2 = 'DEFAULT') OR (license_plate = $2)) AND (($3 = 0) OR (date_part('month', date_time) = $3)) AND (($4 = 0) OR (date_part('year', date_time) = $4)) ORDER BY date_time DESC", userId, licensePlate, month, year)
 	if err != nil {
-		log.Println("ERROR - Getting all reufels failed:", err)
+		logger.Error("Getting all reufels failed: %s", err.Error())
 		return RefuelResponse{}, err
 	}
 
@@ -139,7 +138,7 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 
 		err := rows.Scan(&id, &users_id, &description, &dateTime, &pricePerLiterInEuro, &totalAmount, &pricePerLiter, &currency, &mileage, &licensePlate, &lastChanged)
 		if err != nil {
-			log.Println("ERROR - scan single row failed:", err)
+			logger.Error("Scanning single row failed: %s", err.Error())
 			return RefuelResponse{}, err
 		}
 
