@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"math"
 	"strings"
 	"time"
@@ -21,35 +22,52 @@ func getUserIdByName(username string) int {
 	return user_id
 }
 
-func deleteRefuelByUserId(refuelId int, userId int) error {
-	_, err := conn.Exec(context.Background(), "DELETE FROM "+REFUEL_TABLE_NAME+" WHERE (id=$1 AND users_id=$2)", refuelId, userId)
+func getCredentials(requestedUsername string) (error, string, string) {
+	var username string
+	var password string
+	var err = conn.QueryRow(context.Background(), "SELECT username, pass_key FROM users WHERE username=$1", requestedUsername).Scan(&username, &password)
+	if username == "" {
+		return errors.New("Username " + requestedUsername + " does not exist"), "", ""
+	}
 	if err != nil {
-		logger.Error("Deleting reufel failed: %s", err.Error())
+		return err, "", ""
+	}
+	return nil, username, password
+}
+
+func deleteRefuelByUserId(refuelId int, userId int) error {
+	commandTag, err := conn.Exec(context.Background(), "DELETE FROM "+REFUEL_TABLE_NAME+" WHERE (id=$1 AND users_id=$2)", refuelId, userId)
+	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func updateRefuelByUserId(refuels []Refuel, userId int) error {
-	for i := 0; i < len(refuels); i++ {
-		_, err := conn.Exec(context.Background(), "UPDATE "+REFUEL_TABLE_NAME+" SET description=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, mileage=$7, license_plate=$8 where (id=$9 AND users_id=$10)", refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, refuels[i].LicensePlate, refuels[i].Id, userId)
-		if err != nil {
-			logger.Error("Updating reufel failed: %s", err.Error())
-			return err
-		}
+	if commandTag.RowsAffected() != 1 {
+		return errors.New("No row found to delete")
 	}
 	return nil
 }
 
-func saveRefuelsByUserId(refuels []Refuel, userId int) error {
-	for i := 0; i < len(refuels); i++ {
-		_, err := conn.Exec(context.Background(), "INSERT INTO "+REFUEL_TABLE_NAME+"(users_id, description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9)", userId, refuels[i].Description, refuels[i].DateTime, refuels[i].PricePerLiterInEuro, refuels[i].TotalAmount, refuels[i].PricePerLiter, refuels[i].Currency, refuels[i].Mileage, strings.ToUpper(refuels[i].LicensePlate))
-		if err != nil {
-			logger.Error("Saving refuel failed: %s", err.Error())
-			return err
-		}
+func updateRefuelByUserId(refuel Refuel, userId int) error {
+	commandTag, err := conn.Exec(context.Background(), "UPDATE "+REFUEL_TABLE_NAME+" SET description=$1, date_time=$2, price_per_liter_euro=$3, total_liter=$4, price_per_liter=$5, currency=$6, mileage=$7, license_plate=$8 where (id=$9 AND users_id=$10)", refuel.Description, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Mileage, refuel.LicensePlate, refuel.Id, userId)
+	if err != nil {
+		return err
+	}
+	if commandTag.RowsAffected() != 1 {
+		return errors.New("No row found to delete")
 	}
 	return nil
+}
+
+func saveRefuelByUserId(refuel Refuel, userId int) (error, int) {
+	lastInsertId := 0
+	err := conn.QueryRow(context.Background(), "INSERT INTO "+REFUEL_TABLE_NAME+"(users_id, description, date_time, price_per_liter_euro, total_liter, price_per_liter, currency, mileage, license_plate) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id", userId, refuel.Description, refuel.DateTime, refuel.PricePerLiterInEuro, refuel.TotalAmount, refuel.PricePerLiter, refuel.Currency, refuel.Mileage, strings.ToUpper(refuel.LicensePlate)).Scan(&lastInsertId)
+
+	if err != nil {
+		return err, -1
+	}
+	if lastInsertId <= 0 {
+		return errors.New("Insert was not successful"), -1
+	}
+	return nil, lastInsertId
 }
 
 func getStatisticsByUserId(userId int) (StatisticsResponse, error) {

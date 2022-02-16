@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -45,18 +43,13 @@ func Middleware(next http.Handler) http.Handler {
 		var apiKeyFromClient = r.Header.Get("auth")
 
 		if apiKeyFromClient == apiKey {
-			credentialsValid, err := checkCredentials(r)
-
-			if err != nil {
-				sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials Check failed: "+err.Error())
-				return
-			}
+			credentialsValid := checkCredentials(r)
 
 			if credentialsValid {
 				next.ServeHTTP(w, r)
 				return
 			} else {
-				sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "Invalid credentials")
+				sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials Check failed")
 			}
 		} else {
 			// No api permission
@@ -66,28 +59,23 @@ func Middleware(next http.Handler) http.Handler {
 	})
 }
 
-func checkCredentials(r *http.Request) (bool, error) {
+func checkCredentials(r *http.Request) bool {
 	creds := Credentials{
 		Username: r.Header.Get("username"),
 		Password: r.Header.Get("password"),
 	}
 
-	var username string
-	var password string
-	var err = conn.QueryRow(context.Background(), "SELECT username, pass_key FROM users WHERE username=$1", creds.Username).Scan(&username, &password)
-	if username == "" {
-		log.Printf("WARN - Username %s does not exist", creds.Username)
-		return false, errors.New("Username " + creds.Username + " does not exist")
-	}
+	err, username, password := getCredentials(creds.Username)
+
 	if err != nil {
-		log.Println("ERROR - Credentials check failed:", err)
-		return false, err
+		logger.Error("Credentials check failed: %s", err.Error())
+		return false
 	}
 
 	var usernameEqual = strings.Compare(strings.TrimRight(username, "\n"), strings.TrimRight(creds.Username, "\n")) == 0
 	var passwordEqual = strings.Compare(strings.TrimRight(password, "\n"), strings.TrimRight(creds.Password, "\n")) == 0
 
-	return (usernameEqual && passwordEqual), nil
+	return (usernameEqual && passwordEqual)
 }
 
 func getDefaultRequestObj(w http.ResponseWriter, r *http.Request) (DefaultRequest, error) {
@@ -126,8 +114,9 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = saveRefuelsByUserId(request.Payload, getUserIdByName(username))
+	err, _ = saveRefuelByUserId(request.Payload[0], getUserIdByName(username))
 	if err != nil {
+		logger.Error("Saving refuel failed: %s", err.Error())
 		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -140,8 +129,9 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	err = updateRefuelByUserId(request.Payload, getUserIdByName(username))
+	err = updateRefuelByUserId(request.Payload[0], getUserIdByName(username))
 	if err != nil {
+		logger.Error("Updating reufel failed: %s", err.Error())
 		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -155,13 +145,14 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 	var deletion DeletionRequest
 	err := decoder.Decode(&deletion)
 	if err != nil {
-		log.Println("ERROR - Decoding deletion request failed:", err.Error())
+		logger.Error("Decoding deletion request failed:: %s", err.Error())
 		sendReponseWithMessageAndStatus(w, http.StatusBadRequest, "invalid delete request")
 		return
 	}
 
 	err = deleteRefuelByUserId(deletion.Id, getUserIdByName(username))
 	if err != nil {
+		logger.Error("Deleting reufel failed: %s", err.Error())
 		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
