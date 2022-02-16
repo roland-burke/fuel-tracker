@@ -55,4 +55,5 @@ jobs:
       - name: Coveralls
         uses: shogo82148/actions-goveralls@v1
         with:
-          path-to-profile: ./src/coverage.out
+          path-to-profile: coverage.out
+          working-directory: ./src
