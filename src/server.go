@@ -31,7 +31,7 @@ func startServer(port int, urlPrefix string) {
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
-func sendReponseWithMessageAndStatus(w http.ResponseWriter, status int, msg string) {
+func sendResponseWithMessageAndStatus(w http.ResponseWriter, status int, msg string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	w.Write([]byte(msg))
@@ -49,12 +49,12 @@ func Middleware(next http.Handler) http.Handler {
 				next.ServeHTTP(w, r)
 				return
 			} else {
-				sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials Check failed")
+				sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials Check failed")
 			}
 		} else {
 			// No api permission
 			log.Println("ERROR - Invalid Apikey: " + "'" + apiKeyFromClient + "'")
-			sendReponseWithMessageAndStatus(w, http.StatusUnauthorized, "API access denied!")
+			sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "API access denied!")
 		}
 	})
 }
@@ -85,7 +85,7 @@ func getDefaultRequestObj(w http.ResponseWriter, r *http.Request) (DefaultReques
 	err := decoder.Decode(&defaultRequest)
 	if err != nil {
 		log.Println("ERROR - Decoding request failed:", err.Error())
-		sendReponseWithMessageAndStatus(w, http.StatusBadRequest, err.Error())
+		sendResponseWithMessageAndStatus(w, http.StatusBadRequest, err.Error())
 		return DefaultRequest{}, err
 	}
 	return defaultRequest, nil
@@ -100,11 +100,11 @@ func getStatistics(w http.ResponseWriter, r *http.Request) {
 
 	response, err := getStatisticsByUserId(getUserIdByName(username))
 	if err != nil {
-		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting statistics")
+		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting statistics")
 		return
 	}
 	responseJson, _ := json.Marshal(response)
-	sendReponseWithMessageAndStatus(w, http.StatusOK, string(responseJson))
+	sendResponseWithMessageAndStatus(w, http.StatusOK, string(responseJson))
 }
 
 func addRefuel(w http.ResponseWriter, r *http.Request) {
@@ -117,10 +117,10 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 	err, _ = saveRefuelByUserId(request.Payload[0], getUserIdByName(username))
 	if err != nil {
 		logger.Error("Saving refuel failed: %s", err.Error())
-		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	sendReponseWithMessageAndStatus(w, http.StatusCreated, "Successfully added")
+	sendResponseWithMessageAndStatus(w, http.StatusCreated, "Successfully added")
 }
 
 func updateRefuel(w http.ResponseWriter, r *http.Request) {
@@ -132,10 +132,10 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	err = updateRefuelByUserId(request.Payload[0], getUserIdByName(username))
 	if err != nil {
 		logger.Error("Updating reufel failed: %s", err.Error())
-		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully updated")
+	sendResponseWithMessageAndStatus(w, http.StatusOK, "Successfully updated")
 }
 
 func deleteRefuel(w http.ResponseWriter, r *http.Request) {
@@ -146,17 +146,17 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 	err := decoder.Decode(&deletion)
 	if err != nil {
 		logger.Error("Decoding deletion request failed:: %s", err.Error())
-		sendReponseWithMessageAndStatus(w, http.StatusBadRequest, "invalid delete request")
+		sendResponseWithMessageAndStatus(w, http.StatusBadRequest, "invalid delete request")
 		return
 	}
 
 	err = deleteRefuelByUserId(deletion.Id, getUserIdByName(username))
 	if err != nil {
 		logger.Error("Deleting reufel failed: %s", err.Error())
-		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	sendReponseWithMessageAndStatus(w, http.StatusOK, "Successfully deleted")
+	sendResponseWithMessageAndStatus(w, http.StatusOK, "Successfully deleted")
 }
 
 func getAllRefuels(w http.ResponseWriter, r *http.Request) {
@@ -184,9 +184,9 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 
 	response, err := getAllRefuelsByUserId(getUserIdByName(username), startIndex, licensePlate, month, year)
 	if err != nil {
-		sendReponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
+		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 	responseJson, _ := json.Marshal(response)
-	sendReponseWithMessageAndStatus(w, http.StatusOK, string(responseJson))
+	sendResponseWithMessageAndStatus(w, http.StatusOK, string(responseJson))
 }
