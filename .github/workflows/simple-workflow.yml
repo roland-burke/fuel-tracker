@@ -3,6 +3,27 @@ on: [push, pull_request]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: testpw
+          POSTGRES_USER: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+          --name postgres-test
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+    
     steps:
       - uses: actions/checkout@v2
 
@@ -15,6 +36,18 @@ jobs:
         working-directory: ./src
         run: go build -v
 
+      - name: Prepare DB
+        run: |
+             docker exec -d postgres-test psql -U postgres -c "create database pgx_test;"
+             docker exec -d postgres-test psql -U postgres -c "create domain uint64 as numeric(20,0);"
+             docker cp ./database/db-setup-01.sql postgres-test:setup.sql
+             docker exec -d postgres-test psql -U postgres -d pgx_test -f setup.sql
+             docker cp ./database/test/init.sql postgres-test:init.sql
+             docker exec -d postgres-test psql -U postgres -d pgx_test -f init.sql
+
       - name: Test
         working-directory: ./src
         run: go test -v -coverprofile=coverage.out
+        env:
+          DATABASE_URL: postgres://postgres:testpw@localhost:5432/pgx_test
+          PGX_TEST_DATABASE: host=/var/run/postgresql database=pgx_test
