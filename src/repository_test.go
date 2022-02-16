@@ -30,6 +30,28 @@ func TestGetUserId(t *testing.T) {
 	}
 }
 
+func TestGetCredentials(t *testing.T) {
+	err, username, password := getCredentials("john")
+
+	if err != nil {
+		t.Errorf("Failed getting credentials: %s", err.Error())
+	}
+
+	if username != "john" || password != "john" {
+		t.Errorf("Found wrong credentials: %s, %s, expected: john, john", username, password)
+	}
+
+	err, username, password = getCredentials("not_exist")
+
+	if err == nil {
+		t.Errorf("Did not throw error on non existing username")
+	}
+
+	if username != "" || password != "" {
+		t.Errorf("Username or password was not empty on error: %s, %s", username, password)
+	}
+}
+
 func TestSaveRefuel(t *testing.T) {
 	// Setup
 	refuel := Refuel{
@@ -48,7 +70,6 @@ func TestSaveRefuel(t *testing.T) {
 	var userId = 1
 
 	// Test
-
 	err, refuelId := saveRefuelByUserId(refuel, userId)
 
 	if err != nil {
@@ -61,7 +82,6 @@ func TestSaveRefuel(t *testing.T) {
 
 	// cleanup
 	deleteRefuelByUserId(refuelId, userId)
-
 }
 
 func TestUpdateRefuel(t *testing.T) {
@@ -75,7 +95,7 @@ func TestUpdateRefuel(t *testing.T) {
 		Id:                  1,
 		Description:         "Test",
 		DateTime:            timeObj,
-		PricePerLiterInEuro: 1.67,
+		PricePerLiterInEuro: 1.439,
 		TotalAmount:         42.0,
 		PricePerLiter:       1.488,
 		Currency:            "Chf",
@@ -124,7 +144,6 @@ func TestDeleteRefuel(t *testing.T) {
 	}
 
 	// Test
-
 	err = deleteRefuelByUserId(refuelId, userId)
 	if err != nil {
 		t.Errorf("Delete refuel with userId: %d failed: %s", userId, err.Error())
@@ -164,6 +183,29 @@ func TestGetAllRefuels(t *testing.T) {
 	}
 
 	if err != nil {
-		t.Errorf("Get all Refuels failed: %s failed", err.Error())
+		t.Errorf("Get all Refuels failed: %s", err.Error())
+	}
+}
+
+func TestGetStatistics(t *testing.T) {
+
+	expectedStats := StatisticsResponse{
+		Stats:        []Stat{},
+		TotalMileage: 700,
+		TotalCost:    123.75,
+	}
+
+	statistics, err := getStatisticsByUserId(1)
+
+	if err != nil {
+		t.Errorf("Get Statistics failed: %s", err.Error())
+	}
+
+	if statistics.TotalCost != expectedStats.TotalCost {
+		t.Errorf("Got Total Cost: %f, expected: %f", statistics.TotalCost, expectedStats.TotalCost)
+	}
+
+	if statistics.TotalMileage != expectedStats.TotalMileage {
+		t.Errorf("Got Total Mileage: %f, expected: %f", statistics.TotalMileage, expectedStats.TotalMileage)
 	}
 }
