@@ -35,6 +35,15 @@ jobs:
         working-directory: ./src
         run: go build -v
 
+      - name: Prepare DB
+        run: |
+             docker exec -d ${CONTAINER_NAME} psql -U postgres -c "create database ${DB_NAME};"
+             docker exec -d ${CONTAINER_NAME} psql -U postgres -c "create domain uint64 as numeric(20,0);"
+             docker cp ../database/db-setup-01.sql ${CONTAINER_NAME}:setup.sql
+             docker exec -d ${CONTAINER_NAME} psql -U postgres -d ${DB_NAME} -f setup.sql
+             docker cp ../database/test/init.sql ${CONTAINER_NAME}:init.sql
+             docker exec -d ${CONTAINER_NAME} psql -U postgres -d ${DB_NAME} -f init.sql
+
       - name: Test
         working-directory: ./src
         run: go test -v -coverprofile=coverage.out
