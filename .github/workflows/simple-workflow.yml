@@ -3,6 +3,22 @@ on: [push, pull_request]
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: testpw
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     steps:
       - uses: actions/checkout@v2
 
@@ -18,3 +34,6 @@ jobs:
       - name: Test
         working-directory: ./src
         run: go test -v -coverprofile=coverage.out
+        env:
+          DATABASE_URL: postgres://postgres:testpw@localhost:5432/pgx_test
+          PGX_TEST_DATABASE: host=/var/run/postgresql database=pgx_test
