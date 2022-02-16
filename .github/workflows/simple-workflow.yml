@@ -37,3 +37,6 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:testpw@localhost:5432/pgx_test
           PGX_TEST_DATABASE: host=/var/run/postgresql database=pgx_test
+          POSTGRES_HOST: postgres
+          # The default PostgreSQL port
+          POSTGRES_PORT: 5432
