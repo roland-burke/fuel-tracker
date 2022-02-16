@@ -1,4 +1,4 @@
-# Fuel-Tracker ![Build Status](https://github.com/roland-burke/fuel-tracker/actions/workflows/simple-workflow.yml/badge.svg)
+# Fuel-Tracker ![Build Status](https://github.com/roland-burke/fuel-tracker/actions/workflows/simple-workflow.yml/badge.svg) [![Coverage Status](https://coveralls.io/repos/github/roland-burke/fuel-tracker/badge.svg?branch=master)](https://coveralls.io/github/roland-burke/fuel-tracker?branch=master)
 This is the backend for the Fuel-Tracker App. It accepts basic HTTP requests and manages a Postgres Database. The setup is only tested on Linux.
 ## Prerequisite
 For remote setup:
