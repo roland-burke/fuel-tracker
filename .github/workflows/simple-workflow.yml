@@ -6,7 +6,7 @@ jobs:
     # Service containers to run with `container-job`
     services:
       # Label used to access the service container
-      postgres-test-container:
+      postgres:
         # Docker Hub image
         image: postgres
         # Provide the password for postgres
@@ -37,12 +37,12 @@ jobs:
 
       - name: Prepare DB
         run: |
-             docker exec -d postgres-test-container psql -U postgres -c "create database pgx_test;"
-             docker exec -d postgres-test-container psql -U postgres -c "create domain uint64 as numeric(20,0);"
-             docker cp ../database/db-setup-01.sql postgres-test-container:setup.sql
-             docker exec -d postgres-test-container psql -U postgres -d pgx_test -f setup.sql
-             docker cp ../database/test/init.sql postgres-test-container:init.sql
-             docker exec -d postgres-test-container psql -U postgres -d pgx_test -f init.sql
+             docker exec -d postgres psql -U postgres -c "create database pgx_test;"
+             docker exec -d postgres psql -U postgres -c "create domain uint64 as numeric(20,0);"
+             docker cp ../database/db-setup-01.sql postgres:setup.sql
+             docker exec -d postgres psql -U postgres -d pgx_test -f setup.sql
+             docker cp ../database/test/init.sql postgres:init.sql
+             docker exec -d postgres psql -U postgres -d pgx_test -f init.sql
 
       - name: Test
         working-directory: ./src
