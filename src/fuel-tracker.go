@@ -26,7 +26,7 @@ func printConfig(conf Configuration) {
 }
 
 func main() {
-	logger = rollogger.Init(rollogger.INFO_LEVEL, true, true)
+	initLogger()
 	var config = readConfig()
 	apiKey = config.ApiKey
 	if apiKey == "willbeoverwritten" || apiKey == "CHANGEME" {
@@ -44,6 +44,10 @@ func main() {
 	startServer(port, urlPrefix)
 }
 
+func initLogger() {
+	logger = rollogger.Init(rollogger.INFO_LEVEL, true, true)
+}
+
 func initDb() {
 	var err error
 	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
@@ -59,14 +63,14 @@ func readConfig() Configuration {
 	defer file.Close()
 
 	if err != nil {
-		logger.Error("Cannot open config file from '%s': %s", confPath, err)
+		logger.Error("Cannot open config file from '%s': %s", confPath, err.Error())
 	}
 
 	decoder := json.NewDecoder(file)
 	configuration := Configuration{}
 	err = decoder.Decode(&configuration)
 	if err != nil {
-		logger.Error("Cannot decode config: ", err)
+		logger.Error("Cannot decode config: %s", err.Error())
 	}
 	return configuration
 }
