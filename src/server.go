@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,7 +26,7 @@ func startServer(port int, urlPrefix string) {
 	r.HandleFunc(fmt.Sprintf("%s/api/statistics", urlPrefix), getStatistics).Methods("GET")
 	r.Use(Middleware)
 
-	log.Println(fmt.Sprintf("INFO - Listening on port: %d", port))
+	logger.Info("Listening on port: %d", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
@@ -39,7 +38,7 @@ func sendResponseWithMessageAndStatus(w http.ResponseWriter, status int, msg str
 
 func Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Println("INFO - Request from:", r.RemoteAddr, r.URL)
+		logger.Info("Request from: %s %s", r.RemoteAddr, r.URL)
 		var apiKeyFromClient = r.Header.Get("auth")
 
 		if apiKeyFromClient == apiKey {
@@ -53,7 +52,7 @@ func Middleware(next http.Handler) http.Handler {
 			}
 		} else {
 			// No api permission
-			log.Println("ERROR - Invalid Apikey: " + "'" + apiKeyFromClient + "'")
+			logger.Warn("Invalid Apikey: %s", apiKeyFromClient)
 			sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "API access denied!")
 		}
 	})
@@ -84,7 +83,7 @@ func getDefaultRequestObj(w http.ResponseWriter, r *http.Request) (DefaultReques
 	var defaultRequest DefaultRequest
 	err := decoder.Decode(&defaultRequest)
 	if err != nil {
-		log.Println("ERROR - Decoding request failed:", err.Error())
+		logger.Error("Decoding request failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusBadRequest, err.Error())
 		return DefaultRequest{}, err
 	}
@@ -178,7 +177,7 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 		month, err = strconv.Atoi(values["month"][0])
 		year, err = strconv.Atoi(values["year"][0])
 		if err != nil {
-			log.Printf("ERROR - while parsing query params: %s", values)
+			logger.Error("Parsing query params failed: %s - %s", values, err)
 		}
 	}
 
