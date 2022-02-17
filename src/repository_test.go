@@ -3,6 +3,8 @@ package main
 import (
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func init() {
@@ -11,6 +13,9 @@ func init() {
 }
 
 func TestGetUserId(t *testing.T) {
+	assert := assert.New(t)
+
+	// When
 	var expectedUserIdJohn = 1
 	var expectedUserIdMary = 2
 	var expecteduserIdInvalid = -1
@@ -19,40 +24,35 @@ func TestGetUserId(t *testing.T) {
 	var userIdMary = getUserIdByName("mary")
 	var userIdInvalid = getUserIdByName("not-existing")
 
-	if userIdJohn != expectedUserIdJohn {
-		t.Errorf("Got user id: %d, expected: %d", userIdJohn, expectedUserIdJohn)
-	}
-	if userIdMary != expectedUserIdMary {
-		t.Errorf("Got user id: %d, expected: %d", userIdMary, expectedUserIdMary)
-	}
-	if userIdInvalid != -1 {
-		t.Errorf("Got user id: %d, expected: %d", userIdInvalid, expecteduserIdInvalid)
-	}
+	// Then
+	assert.Equal(expectedUserIdJohn, userIdJohn)
+	assert.Equal(expectedUserIdMary, userIdMary)
+	assert.Equal(expecteduserIdInvalid, userIdInvalid)
 }
 
 func TestGetCredentials(t *testing.T) {
+	assert := assert.New(t)
+
+	// When
 	err, username, password := getCredentials("john")
 
-	if err != nil {
-		t.Errorf("Failed getting credentials: %s", err.Error())
-	}
+	// Then
+	assert.Nil(err)
+	assert.Equal("john", username)
+	assert.Equal("john", password)
 
-	if username != "john" || password != "john" {
-		t.Errorf("Found wrong credentials: %s, %s, expected: john, john", username, password)
-	}
-
+	// When
 	err, username, password = getCredentials("not_exist")
 
-	if err == nil {
-		t.Errorf("Did not throw error on non existing username")
-	}
-
-	if username != "" || password != "" {
-		t.Errorf("Username or password was not empty on error: %s, %s", username, password)
-	}
+	// Then
+	assert.NotNil(err)
+	assert.Equal("", username)
+	assert.Equal("", password)
 }
 
 func TestSaveRefuel(t *testing.T) {
+	assert := assert.New(t)
+
 	// Setup
 	refuel := Refuel{
 		Id:                  0,
@@ -69,32 +69,30 @@ func TestSaveRefuel(t *testing.T) {
 
 	var userId = 1
 
-	// Test
+	// When
 	err, refuelId := saveRefuelByUserId(refuel, userId)
 
-	if err != nil {
-		t.Errorf("Save user with id: %d failed: %s", userId, err.Error())
-	}
+	// Then
+	assert.Nil(err)
+	assert.Equal(4, refuelId)
 
-	if refuelId != 4 {
-		t.Errorf("SaveRefuelByUserId returned wrong refuelId: %d, expected: %d", refuelId, 4)
-	}
-
-	// cleanup
+	// Cleanup
 	deleteRefuelByUserId(refuelId, userId)
 }
 
 func TestUpdateRefuel(t *testing.T) {
-	timeObj, err := time.Parse("2006-02-01T15:04:05", "2021-09-04T13:10:25")
+	assert := assert.New(t)
+
+	timeObj1, err := time.Parse("2006-02-01T15:04:05", "2021-09-04T13:10:25")
 
 	if err != nil {
 		logger.Error(err.Error())
 	}
 
-	newRefuel := Refuel{
+	expectedRefuel := Refuel{
 		Id:                  1,
 		Description:         "Test",
-		DateTime:            timeObj,
+		DateTime:            timeObj1,
 		PricePerLiterInEuro: 1.439,
 		TotalAmount:         42.0,
 		PricePerLiter:       1.488,
@@ -104,23 +102,30 @@ func TestUpdateRefuel(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
+	// When
 	var userId = 1
-	err = updateRefuelByUserId(newRefuel, userId)
-
-	if err != nil {
-		t.Errorf("Updating refuel with userId: %d failed: %s", userId, err.Error())
-	}
+	err = updateRefuelByUserId(expectedRefuel, userId)
+	assert.Nil(err)
 
 	refuelResponse, err := getAllRefuelsByUserId(userId, 0, "KN-KN-9999", 0, 0)
+	assert.Nil(err)
 
+	// Then
 	var targetRefuel = refuelResponse.Refuels[len(refuelResponse.Refuels)-1]
 
-	if targetRefuel.Description != "Test" {
-		t.Errorf("Updating refuel with userId: %d failed, description: %s", userId, targetRefuel.Description)
-	}
+	assert.Equal(expectedRefuel.Description, targetRefuel.Description)
+	assert.Equal(expectedRefuel.DateTime, targetRefuel.DateTime)
+	assert.Equal(expectedRefuel.PricePerLiterInEuro, targetRefuel.PricePerLiterInEuro)
+	assert.Equal(expectedRefuel.TotalAmount, targetRefuel.TotalAmount)
+	assert.Equal(expectedRefuel.PricePerLiter, targetRefuel.PricePerLiter)
+	assert.Equal(expectedRefuel.Currency, targetRefuel.Currency)
+	assert.Equal(expectedRefuel.Mileage, targetRefuel.Mileage)
+	assert.Equal(expectedRefuel.LicensePlate, targetRefuel.LicensePlate)
 }
 
 func TestDeleteRefuel(t *testing.T) {
+	assert := assert.New(t)
+
 	// Setup
 	refuel := Refuel{
 		Id:                  9999,
@@ -138,24 +143,19 @@ func TestDeleteRefuel(t *testing.T) {
 	var userId = 1
 
 	err, refuelId := saveRefuelByUserId(refuel, userId)
-
-	if err != nil {
-		t.Errorf("Save refuel with userId: %d failed: %s", userId, err.Error())
-	}
+	assert.Nil(err)
 
 	// Test
 	err = deleteRefuelByUserId(refuelId, userId)
-	if err != nil {
-		t.Errorf("Delete refuel with userId: %d failed: %s", userId, err.Error())
-	}
+	assert.Nil(err)
 
 	err = deleteRefuelByUserId(refuelId, userId)
-	if err == nil {
-		t.Errorf("Deleted refuel with userId twice: userId: %d, refuelId: %d", userId, refuelId)
-	}
+	assert.NotNil(err)
 }
 
 func TestGetAllRefuels(t *testing.T) {
+	assert := assert.New(t)
+
 	refuel := Refuel{
 		Id:                  0,
 		Description:         "Test",
@@ -177,18 +177,15 @@ func TestGetAllRefuels(t *testing.T) {
 	var userId = 1
 
 	refuelResponse, err := getAllRefuelsByUserId(userId, 0, "KN-KN-9999", 0, 0)
+	assert.Nil(err)
 
-	if refuelResponse.TotalCount != expectedRefuelResponse.TotalCount {
-		t.Errorf("Get all Refuels returned wrong totalCount: %d, expected: %d", refuelResponse.TotalCount, expectedRefuelResponse.TotalCount)
-	}
-
-	if err != nil {
-		t.Errorf("Get all Refuels failed: %s", err.Error())
-	}
+	assert.Equal(expectedRefuelResponse.TotalCount, refuelResponse.TotalCount)
 }
 
 func TestGetStatistics(t *testing.T) {
+	assert := assert.New(t)
 
+	// Setup
 	expectedStats := StatisticsResponse{
 		Stats:        []Stat{},
 		TotalMileage: 700,
@@ -196,16 +193,8 @@ func TestGetStatistics(t *testing.T) {
 	}
 
 	statistics, err := getStatisticsByUserId(1)
+	assert.Nil(err)
 
-	if err != nil {
-		t.Errorf("Get Statistics failed: %s", err.Error())
-	}
-
-	if statistics.TotalCost != expectedStats.TotalCost {
-		t.Errorf("Got Total Cost: %f, expected: %f", statistics.TotalCost, expectedStats.TotalCost)
-	}
-
-	if statistics.TotalMileage != expectedStats.TotalMileage {
-		t.Errorf("Got Total Mileage: %f, expected: %f", statistics.TotalMileage, expectedStats.TotalMileage)
-	}
+	assert.Equal(expectedStats.TotalCost, statistics.TotalCost)
+	assert.Equal(expectedStats.TotalMileage, statistics.TotalMileage)
 }
