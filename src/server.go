@@ -24,7 +24,7 @@ func startServer(port int, urlPrefix string) {
 	r.HandleFunc(fmt.Sprintf("%s/api/update", urlPrefix), updateRefuel).Methods("PUT")
 	r.HandleFunc(fmt.Sprintf("%s/api/get/all", urlPrefix), getAllRefuels).Methods("GET")
 	r.HandleFunc(fmt.Sprintf("%s/api/statistics", urlPrefix), getStatistics).Methods("GET")
-	r.Use(Middleware)
+	r.Use(middleware)
 
 	logger.Info("Listening on port: %d", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
@@ -36,26 +36,30 @@ func sendResponseWithMessageAndStatus(w http.ResponseWriter, status int, msg str
 	w.Write([]byte(msg))
 }
 
-func Middleware(next http.Handler) http.Handler {
+func middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		logger.Info("Request from: %s %s", r.RemoteAddr, r.URL)
-		var apiKeyFromClient = r.Header.Get("auth")
-
-		if apiKeyFromClient == apiKey {
-			credentialsValid := checkCredentials(r)
-
-			if credentialsValid {
-				next.ServeHTTP(w, r)
-				return
-			} else {
-				sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials Check failed")
-			}
-		} else {
-			// No api permission
-			logger.Warn("Invalid Apikey: %s", apiKeyFromClient)
-			sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "API access denied!")
-		}
+		intermediate(w, r, next)
 	})
+}
+
+func intermediate(w http.ResponseWriter, r *http.Request, next http.Handler) {
+	logger.Info("Request from: %s %s", r.RemoteAddr, r.URL)
+	var apiKeyFromClient = r.Header.Get("auth")
+
+	if apiKeyFromClient == apiKey {
+		credentialsValid := checkCredentials(r)
+
+		if credentialsValid {
+			next.ServeHTTP(w, r)
+			return
+		} else {
+			sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "Credentials Check failed")
+		}
+	} else {
+		// No api permission
+		logger.Warn("Invalid Apikey: %s", apiKeyFromClient)
+		sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "API access denied!")
+	}
 }
 
 func checkCredentials(r *http.Request) bool {
@@ -84,7 +88,7 @@ func getDefaultRequestObj(w http.ResponseWriter, r *http.Request) (DefaultReques
 	err := decoder.Decode(&defaultRequest)
 	if err != nil {
 		logger.Error("Decoding request failed: %s", err.Error())
-		sendResponseWithMessageAndStatus(w, http.StatusBadRequest, err.Error())
+		sendResponseWithMessageAndStatus(w, http.StatusBadRequest, "Failed to decode request")
 		return DefaultRequest{}, err
 	}
 	return defaultRequest, nil
@@ -99,7 +103,7 @@ func getStatistics(w http.ResponseWriter, r *http.Request) {
 
 	response, err := getStatisticsByUserId(getUserIdByName(username))
 	if err != nil {
-		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, "error while getting statistics")
+		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error while getting statistics")
 		return
 	}
 	responseJson, _ := json.Marshal(response)
