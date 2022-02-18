@@ -3,9 +3,9 @@
 DB_NAME=pgx_test
 CONTAINER_NAME=fuel-tracker-postgres-test
 
-# cleanup 
-docker stop ${CONTAINER_NAME}
-docker rm ${CONTAINER_NAME}
+# setup 
+docker stop ${CONTAINER_NAME} 2> /dev/null
+docker rm ${CONTAINER_NAME} 2> /dev/null
 
 # start container and setup db
 docker run --name ${CONTAINER_NAME} -p 5432:5432 -e POSTGRES_PASSWORD=testpw -d postgres
@@ -21,3 +21,7 @@ docker exec -d ${CONTAINER_NAME} psql -U postgres -d ${DB_NAME} -f init.sql
 
 # run tests
 PGX_TEST_DATABASE="host=/var/run/postgresql database=${DB_NAME}" DATABASE_URL="postgres://postgres:testpw@localhost:5432/${DB_NAME}" go test -v -cover
+
+# cleanup 
+#docker stop ${CONTAINER_NAME}
+#docker rm ${CONTAINER_NAME}

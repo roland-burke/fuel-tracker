@@ -15,6 +15,9 @@ mileageCount int;
 declare
 dateCount int;
 
+declare
+notUsed int;
+
 BEGIN
 -- trigger logic
 
@@ -22,9 +25,10 @@ SELECT count(*) INTO mileageCount FROM refuel WHERE mileage > NEW.mileage AND us
 SELECT count(*) INTO dateCount FROM refuel WHERE date_time >= NEW.date_time AND users_id = NEW.users_id AND license_plate = NEW.license_plate;
 
 	IF mileageCount > dateCount THEN
-		RAISE EXCEPTION 'Mileage has already been reached'; 
+		SELECT setval('refuel_id_seq', currval('refuel_id_seq') - 1, true) INTO notUsed;
+		RAISE EXCEPTION 'Mileage has already been reached';
 	END IF;
-		RETURN NEW;
+	RETURN NEW;
 END;
 $$ LANGUAGE PLPGSQL;
 

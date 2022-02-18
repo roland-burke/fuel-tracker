@@ -114,7 +114,7 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err, _ = saveRefuelByUserId(request.Payload[0], getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
+	_, err = saveRefuelByUserId(request.Payload[0], getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
 		logger.Error("Saving refuel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
@@ -130,7 +130,7 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	}
 	err = updateRefuelByUserId(request.Payload[0], getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
-		logger.Error("Updating reufel failed: %s", err.Error())
+		logger.Error("Updating refuel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}

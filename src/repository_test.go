@@ -4,11 +4,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/roland-burke/rollogger"
 	"github.com/stretchr/testify/assert"
 )
 
 func init() {
-	initLogger()
+	// Mute the logger
+	logger = rollogger.Init(rollogger.INFO_LEVEL, true, true)
 	initDb()
 }
 
@@ -41,7 +43,7 @@ var exampleRefuelObj2_repository = Refuel{
 	LastChanged:         time.Now(),
 }
 
-func TestGetUserId(t *testing.T) {
+func TestGetUserIdByCredentials(t *testing.T) {
 	assert := assert.New(t)
 
 	// When
@@ -86,7 +88,7 @@ func TestSaveRefuel(t *testing.T) {
 	var userId = 1
 
 	// When
-	err, refuelId := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
+	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
 
 	// Then
 	assert.Nil(err)
@@ -97,15 +99,74 @@ func TestSaveRefuel(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestUpdateRefuel(t *testing.T) {
+func TestSaveRefuelWithBadMileage(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup
-	err, refuelId := saveRefuelByUserId(exampleRefuelObj1_repository, 1)
+	var userId = 1
+
+	var refuelWithInvalidMileage = Refuel{
+		Id:                  4,
+		Description:         "TestRefuel1",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             300,
+		LicensePlate:        "KN-KN-9999",
+		LastChanged:         time.Now(),
+	}
+
+	// When
+	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
+
+	// Then
+	assert.NotNil(err)
+	assert.Equal(-1, refuelId)
+	assert.Equal("ERROR: Mileage has already been reached (SQLSTATE P0001)", err.Error())
+}
+
+/*
+func TestSaveRefuelWithUnrealisticDate(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup
+	var userId = 1
+	var unrealisticTime, _ = time.Parse("2006-02-01T15:04:05", "1950-09-05T16:34:25")
+
+	var refuelWithInvalidMileage = Refuel{
+		Id:                  4,
+		Description:         "TestRefuel1",
+		DateTime:            unrealisticTime,
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             390789,
+		LicensePlate:        "KN-KN-9999",
+		LastChanged:         time.Now(),
+	}
+
+	// When
+	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
+
+	// Then
+	assert.NotNil(err)
+	assert.Equal(-1, refuelId)
+	assert.Equal("ERROR: new row for relation \"refuel\" violates check constraint \"realistic_date\" (SQLSTATE 23514)", err.Error())
+}
+*/
+
+func TestUpdateRefuelByUserId(t *testing.T) {
+	assert := assert.New(t)
+	var userId = 1
+
+	// Setup
+	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
 	assert.Nil(err)
 
 	// When
-	var userId = 1
 	err = updateRefuelByUserId(exampleRefuelObj2_repository, userId)
 	assert.Nil(err)
 
@@ -129,13 +190,13 @@ func TestUpdateRefuel(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestDeleteRefuel(t *testing.T) {
+func TestDeleteRefuelByUserId(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup
 	var userId = 1
 
-	err, refuelId := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
+	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
 	assert.Nil(err)
 
 	// Test
