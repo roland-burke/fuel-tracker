@@ -12,6 +12,35 @@ func init() {
 	initDb()
 }
 
+var timeObj1_repository, _ = time.Parse("2006-02-01T15:04:05", "2021-09-04T13:10:25")
+var timeObj2_repository, _ = time.Parse("2006-02-01T15:04:05", "2021-09-05T16:34:25")
+
+var exampleRefuelObj1_repository = Refuel{
+	Id:                  4,
+	Description:         "TestRefuel1",
+	DateTime:            timeObj1_repository,
+	PricePerLiterInEuro: 1.2,
+	TotalAmount:         35,
+	PricePerLiter:       40,
+	Currency:            "Chf",
+	Mileage:             42100,
+	LicensePlate:        "KN-KN-9999",
+	LastChanged:         time.Now(),
+}
+
+var exampleRefuelObj2_repository = Refuel{
+	Id:                  5,
+	Description:         "TestRefuel2",
+	DateTime:            timeObj2_repository,
+	PricePerLiterInEuro: 1.234,
+	TotalAmount:         55,
+	PricePerLiter:       40,
+	Currency:            "Chf",
+	Mileage:             43100,
+	LicensePlate:        "KN-KN-9999",
+	LastChanged:         time.Now(),
+}
+
 func TestGetUserId(t *testing.T) {
 	assert := assert.New(t)
 
@@ -54,57 +83,30 @@ func TestSaveRefuel(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup
-	refuel := Refuel{
-		Id:                  0,
-		Description:         "Test",
-		DateTime:            time.Now(),
-		PricePerLiterInEuro: 1.2,
-		TotalAmount:         35,
-		PricePerLiter:       40,
-		Currency:            "Chf",
-		Mileage:             200450,
-		LicensePlate:        "KN-KN-420",
-		LastChanged:         time.Now(),
-	}
-
 	var userId = 1
 
 	// When
-	err, refuelId := saveRefuelByUserId(refuel, userId)
+	err, refuelId := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
 
 	// Then
 	assert.Nil(err)
-	assert.Equal(4, refuelId)
+	assert.Equal(refuelId, refuelId)
 
 	// Cleanup
-	deleteRefuelByUserId(refuelId, userId)
+	err = deleteRefuelByUserId(refuelId, userId)
+	assert.Nil(err)
 }
 
 func TestUpdateRefuel(t *testing.T) {
 	assert := assert.New(t)
 
-	timeObj1, err := time.Parse("2006-02-01T15:04:05", "2021-09-04T13:10:25")
-
-	if err != nil {
-		logger.Error(err.Error())
-	}
-
-	expectedRefuel := Refuel{
-		Id:                  1,
-		Description:         "Test",
-		DateTime:            timeObj1,
-		PricePerLiterInEuro: 1.439,
-		TotalAmount:         42.0,
-		PricePerLiter:       1.488,
-		Currency:            "Chf",
-		Mileage:             40100,
-		LicensePlate:        "KN-KN-9999",
-		LastChanged:         time.Now(),
-	}
+	// Setup
+	err, refuelId := saveRefuelByUserId(exampleRefuelObj1_repository, 1)
+	assert.Nil(err)
 
 	// When
 	var userId = 1
-	err = updateRefuelByUserId(expectedRefuel, userId)
+	err = updateRefuelByUserId(exampleRefuelObj2_repository, userId)
 	assert.Nil(err)
 
 	refuelResponse, err := getAllRefuelsByUserId(userId, 0, "KN-KN-9999", 0, 0)
@@ -113,36 +115,27 @@ func TestUpdateRefuel(t *testing.T) {
 	// Then
 	var targetRefuel = refuelResponse.Refuels[len(refuelResponse.Refuels)-1]
 
-	assert.Equal(expectedRefuel.Description, targetRefuel.Description)
-	assert.Equal(expectedRefuel.DateTime, targetRefuel.DateTime)
-	assert.Equal(expectedRefuel.PricePerLiterInEuro, targetRefuel.PricePerLiterInEuro)
-	assert.Equal(expectedRefuel.TotalAmount, targetRefuel.TotalAmount)
-	assert.Equal(expectedRefuel.PricePerLiter, targetRefuel.PricePerLiter)
-	assert.Equal(expectedRefuel.Currency, targetRefuel.Currency)
-	assert.Equal(expectedRefuel.Mileage, targetRefuel.Mileage)
-	assert.Equal(expectedRefuel.LicensePlate, targetRefuel.LicensePlate)
+	assert.Equal(exampleRefuelObj2_repository.Description, targetRefuel.Description)
+	assert.Equal(exampleRefuelObj2_repository.DateTime, targetRefuel.DateTime)
+	assert.Equal(exampleRefuelObj2_repository.PricePerLiterInEuro, targetRefuel.PricePerLiterInEuro)
+	assert.Equal(exampleRefuelObj2_repository.TotalAmount, targetRefuel.TotalAmount)
+	assert.Equal(exampleRefuelObj2_repository.PricePerLiter, targetRefuel.PricePerLiter)
+	assert.Equal(exampleRefuelObj2_repository.Currency, targetRefuel.Currency)
+	assert.Equal(exampleRefuelObj2_repository.Mileage, targetRefuel.Mileage)
+	assert.Equal(exampleRefuelObj2_repository.LicensePlate, targetRefuel.LicensePlate)
+
+	// Cleanup
+	err = deleteRefuelByUserId(refuelId, userId)
+	assert.Nil(err)
 }
 
 func TestDeleteRefuel(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup
-	refuel := Refuel{
-		Id:                  9999,
-		Description:         "Test",
-		DateTime:            time.Now(),
-		PricePerLiterInEuro: 1.67,
-		TotalAmount:         42,
-		PricePerLiter:       1.78,
-		Currency:            "Chf",
-		Mileage:             200460,
-		LicensePlate:        "KN-KN-420",
-		LastChanged:         time.Now(),
-	}
-
 	var userId = 1
 
-	err, refuelId := saveRefuelByUserId(refuel, userId)
+	err, refuelId := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
 	assert.Nil(err)
 
 	// Test
@@ -182,7 +175,7 @@ func TestGetAllRefuels(t *testing.T) {
 	assert.Equal(expectedRefuelResponse.TotalCount, refuelResponse.TotalCount)
 }
 
-func TestGetStatistics(t *testing.T) {
+func TestGetStatisticsByUserId(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup
