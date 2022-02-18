@@ -99,9 +99,7 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStatistics(w http.ResponseWriter, r *http.Request) {
-	var username = r.Header.Get("username")
-
-	response, err := getStatisticsByUserId(getUserIdByName(username))
+	response, err := getStatisticsByUserId(getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error while getting statistics")
 		return
@@ -111,13 +109,12 @@ func getStatistics(w http.ResponseWriter, r *http.Request) {
 }
 
 func addRefuel(w http.ResponseWriter, r *http.Request) {
-	var username = r.Header.Get("username")
 	request, err := getDefaultRequestObj(w, r)
 	if err != nil {
 		return
 	}
 
-	err, _ = saveRefuelByUserId(request.Payload[0], getUserIdByName(username))
+	err, _ = saveRefuelByUserId(request.Payload[0], getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
 		logger.Error("Saving refuel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
@@ -127,12 +124,11 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateRefuel(w http.ResponseWriter, r *http.Request) {
-	var username = r.Header.Get("username")
 	request, err := getDefaultRequestObj(w, r)
 	if err != nil {
 		return
 	}
-	err = updateRefuelByUserId(request.Payload[0], getUserIdByName(username))
+	err = updateRefuelByUserId(request.Payload[0], getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
 		logger.Error("Updating reufel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
@@ -143,7 +139,6 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 
 func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
-	var username = r.Header.Get("username")
 
 	var deletion DeletionRequest
 	err := decoder.Decode(&deletion)
@@ -153,7 +148,7 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = deleteRefuelByUserId(deletion.Id, getUserIdByName(username))
+	err = deleteRefuelByUserId(deletion.Id, getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
 		logger.Error("Deleting reufel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
@@ -163,8 +158,6 @@ func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllRefuels(w http.ResponseWriter, r *http.Request) {
-	var username = r.Header.Get("username")
-
 	var startIndex int = 0
 	var licensePlate string = "ALL"
 
@@ -185,7 +178,7 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	response, err := getAllRefuelsByUserId(getUserIdByName(username), startIndex, licensePlate, month, year)
+	response, err := getAllRefuelsByUserId(getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")), startIndex, licensePlate, month, year)
 	if err != nil {
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return

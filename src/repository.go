@@ -11,9 +11,9 @@ import (
 const REFUEL_TABLE_NAME = "refuel"
 const MAX_RESPONSE_SIZE = 8
 
-func getUserIdByName(username string) int {
+func getUserIdByCredentials(username string, password string) int {
 	var user_id int
-	err := conn.QueryRow(context.Background(), "SELECT users_id FROM users WHERE username=$1", username).Scan(&user_id)
+	err := conn.QueryRow(context.Background(), "SELECT users_id FROM users WHERE (username=$1 AND pass_key=$2)", username, password).Scan(&user_id)
 	if err != nil {
 		logger.Error("Cannot get user id: %s", err.Error())
 		return -1
@@ -127,7 +127,7 @@ func getStatisticsByUserId(userId int) (StatisticsResponse, error) {
 
 func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, month int, year int) (RefuelResponse, error) {
 	var err error = nil
-	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 AND (($2 = 'DEFAULT') OR (license_plate = $2)) AND (($3 = 0) OR (date_part('month', date_time) = $3)) AND (($4 = 0) OR (date_part('year', date_time) = $4)) ORDER BY date_time DESC", userId, licensePlate, month, year)
+	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 AND (($2 = 'ALL') OR (license_plate = $2)) AND (($3 = 0) OR (date_part('month', date_time) = $3)) AND (($4 = 0) OR (date_part('year', date_time) = $4)) ORDER BY date_time DESC", userId, licensePlate, month, year)
 	if err != nil {
 		logger.Error("Getting all reufels failed: %s", err.Error())
 		return RefuelResponse{}, err

@@ -49,9 +49,9 @@ func TestGetUserId(t *testing.T) {
 	var expectedUserIdMary = 2
 	var expecteduserIdInvalid = -1
 
-	var userIdJohn = getUserIdByName("john")
-	var userIdMary = getUserIdByName("mary")
-	var userIdInvalid = getUserIdByName("not-existing")
+	var userIdJohn = getUserIdByCredentials("john", "john")
+	var userIdMary = getUserIdByCredentials("mary", "mary")
+	var userIdInvalid = getUserIdByCredentials("not-existing", "asdf")
 
 	// Then
 	assert.Equal(expectedUserIdJohn, userIdJohn)

@@ -134,6 +134,7 @@ func TestGetStatistics(t *testing.T) {
 
 	// test
 	req.Header.Set("username", "john")
+	req.Header.Set("password", "john")
 
 	// When
 	getStatistics(recorder, req)
@@ -164,6 +165,7 @@ func TestAddRefuel(t *testing.T) {
 
 	// test
 	req.Header.Set("username", "john")
+	req.Header.Set("password", "john")
 
 	// When
 	addRefuel(recorder, req)
