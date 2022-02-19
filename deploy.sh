@@ -12,7 +12,7 @@ DEV_BACKEND_CONFIG="conf.dev.json"
 # === REMOTE ===
 if [[ "$1" = "remote" ]]
 then
-	docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE build --no-cache --build-arg configFilePath=$PROD_BACKEND_CONFIG --build-arg userInitFilePath="./prod/db-init-user-prod.sql" --build-arg dataInitFilePath="./prod/db-init-data-prod.sql"
+	docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE build --no-cache --build-arg configFilePath=$PROD_BACKEND_CONFIG
     docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE up -d --force-recreate
 
 # === LOCAL ===
@@ -24,7 +24,7 @@ then
 		rm -rf ../.fuel-tracker-db
 	fi
 	# build new image
-	docker-compose --env-file $DEV_ENV_FILE build --no-cache --build-arg configFilePath=$DEV_BACKEND_CONFIG --build-arg userInitFilePath="./dev/db-init-user-dev.sql" --build-arg dataInitFilePath="./dev/db-init-data-dev.sql"
+	docker-compose --env-file $DEV_ENV_FILE build --no-cache --build-arg configFilePath=$DEV_BACKEND_CONFIG
 
 	# remove builder image
 	docker image prune --force --filter label=stage=builder
