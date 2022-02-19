@@ -9,13 +9,13 @@ ARG configFilePath=conf.prod.json
 WORKDIR /app
 
 # Download necessary Go modules
-COPY src/go.mod ./
-COPY src/go.sum ./
+COPY go.mod ./
+COPY go.sum ./
 
 RUN go mod download
 
 # Copy files to workdir
-COPY src/*.go ./
+COPY *.go ./
 COPY config/${configFilePath} config/conf.json
 
 RUN go build

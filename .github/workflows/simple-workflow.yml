@@ -33,7 +33,6 @@ jobs:
           go-version: 1.17
 
       - name: Build
-        working-directory: ./src
         run: go build -v
 
       - name: Prepare DB
@@ -46,7 +45,6 @@ jobs:
              docker exec -d postgres-test psql -U postgres -d pgx_test -f init.sql
 
       - name: Test
-        working-directory: ./src
         run: go test -v -coverprofile=coverage.out
         env:
           DATABASE_URL: postgres://postgres:testpw@localhost:5432/pgx_test
@@ -56,4 +54,3 @@ jobs:
         uses: shogo82148/actions-goveralls@v1
         with:
           path-to-profile: coverage.out
-          working-directory: ./src
