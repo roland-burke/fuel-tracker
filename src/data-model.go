@@ -19,7 +19,7 @@ type Refuel struct {
 	TotalAmount         float64   `json:"totalAmount"`
 	PricePerLiter       float64   `json:"pricePerLiter"`
 	Currency            string    `json:"currency"`
-	Mileage             float64   `json:"mileage"`
+	Mileage             int       `json:"mileage"`
 	LicensePlate        string    `json:"licensePlate"`
 	LastChanged         time.Time `json:"lastChanged"`
 }
@@ -27,7 +27,7 @@ type Refuel struct {
 type Stat struct {
 	Year    int     `json:"year"`
 	Cost    float64 `json:"cost"`
-	Mileage float64 `json:"mileage"`
+	Mileage int     `json:"mileage"`
 }
 
 type Credentials struct {
@@ -41,9 +41,11 @@ type RefuelResponse struct {
 }
 
 type StatisticsResponse struct {
-	Stats        []Stat  `json:"stats"`
-	TotalCost    float64 `json:"totalCost"`
-	TotalMileage float64 `json:"totalMileage"`
+	Stats                   []Stat  `json:"stats"`
+	TotalCost               float64 `json:"totalCost"`
+	TotalMileage            int     `json:"totalMileage"`
+	AverageCost             float64 `json:"avrgCost"`
+	AverageMileagePerRefuel int     `json:"avrgDistancePerRefuel"`
 }
 
 type DefaultRequest struct {

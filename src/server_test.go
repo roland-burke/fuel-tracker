@@ -50,7 +50,7 @@ var exampleRefuelObj2_server = DefaultRequest{
 
 func init() {
 	// Mute the logger
-	logger = rollogger.Init(-1, true, true)
+	logger = rollogger.Init(rollogger.ERROR_LEVEL, true, true)
 	initDb()
 }
 

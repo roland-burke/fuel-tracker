@@ -51,7 +51,7 @@ CREATE TABLE IF NOT EXISTS refuel (
     total_liter             float8 NOT NULL constraint total_liter_positive_and_realisitc CHECK (total_liter > 0 AND total_liter < 2000),
     price_per_liter         float8 NOT NULL constraint price_zero_or_positive CHECK (price_per_liter >= 0),
     currency                varchar(12) NOT NULL,
-    mileage                 float8 NOT NULL constraint realistic_mileage CHECK (mileage > 0 AND mileage < 1000000),
+    mileage                 int NOT NULL constraint realistic_mileage CHECK (mileage > 0 AND mileage < 1000000),
     license_plate           varchar(15) NOT NULL,
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 	PRIMARY KEY (license_plate, mileage),

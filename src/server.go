@@ -99,12 +99,18 @@ func home(w http.ResponseWriter, r *http.Request) {
 }
 
 func getStatistics(w http.ResponseWriter, r *http.Request) {
-	response, err := getStatisticsByUserId(getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
+	var params = r.URL.Query()["licensePlate"]
+	var licensePlate = "ALL"
+	if len(params) >= 1 {
+		licensePlate = params[0]
+	}
+	response := getStatisticsByUserId(getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")), licensePlate)
+
+	responseJson, err := json.Marshal(response)
 	if err != nil {
-		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error while getting statistics")
+		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, "Error while parsing statistics")
 		return
 	}
-	responseJson, _ := json.Marshal(response)
 	sendResponseWithMessageAndStatus(w, http.StatusOK, string(responseJson))
 }
 

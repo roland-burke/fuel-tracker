@@ -10,7 +10,7 @@ import (
 
 func init() {
 	// Mute the logger
-	logger = rollogger.Init(rollogger.INFO_LEVEL, true, true)
+	logger = rollogger.Init(rollogger.ERROR_LEVEL, true, true)
 	initDb()
 }
 
@@ -246,8 +246,7 @@ func TestGetStatisticsByUserId(t *testing.T) {
 		TotalCost:    123.75,
 	}
 
-	statistics, err := getStatisticsByUserId(1)
-	assert.Nil(err)
+	statistics := getStatisticsByUserId(1, "ALL")
 
 	assert.Equal(expectedStats.TotalCost, statistics.TotalCost)
 	assert.Equal(expectedStats.TotalMileage, statistics.TotalMileage)
