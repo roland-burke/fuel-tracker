@@ -21,6 +21,7 @@ type Refuel struct {
 	Currency            string    `json:"currency"`
 	Mileage             int       `json:"mileage"`
 	LicensePlate        string    `json:"licensePlate"`
+	Trip                int       `json:"trip"`
 	LastChanged         time.Time `json:"lastChanged"`
 }
 
