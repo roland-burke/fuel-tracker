@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/roland-burke/rollogger"
 )
 
@@ -15,7 +15,7 @@ var apiKey = "willbeoverwritten"
 
 const API_KEY_MIN_LENGTH = 12
 
-var conn *pgx.Conn
+var conn *pgxpool.Pool
 var logger *rollogger.Log
 
 func printConfig(conf Configuration) {
@@ -26,7 +26,7 @@ func printConfig(conf Configuration) {
 }
 
 func main() {
-	logger = rollogger.Init(rollogger.INFO_LEVEL, true, true)
+	logger = rollogger.Init(rollogger.DEBUG_LEVEL, true, true)
 	var config = readConfig()
 	apiKey = config.ApiKey
 	if apiKey == "willbeoverwritten" || apiKey == "CHANGEME" {
@@ -46,7 +46,8 @@ func main() {
 
 func initDb() {
 	var err error
-	conn, err = pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+
+	conn, err = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
 	logger.Debug(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		logger.Error("Unable to connect to database: %s", err.Error())

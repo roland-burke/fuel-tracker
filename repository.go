@@ -81,6 +81,7 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 	rows, err := conn.Query(context.Background(), "SELECT * FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 AND (($2 = 'ALL') OR (license_plate = $2)) AND (($3 = 0) OR (date_part('month', date_time) = $3)) AND (($4 = 0) OR (date_part('year', date_time) = $4)) ORDER BY date_time DESC", userId, licensePlate, month, year)
 	if err != nil {
 		logger.Error("Getting all reufels failed: %s", err.Error())
+		rows.Close()
 		return RefuelResponse{}, err
 	}
 
@@ -88,9 +89,11 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 
 	var refuelListBuffer [MAX_RESPONSE_SIZE]Refuel
 
-	var index = 0
-	var counter = 0
+	var responseListIndex = 0
+	var totalCounter = 0
 	var validCounter = 0
+
+	var tripMap = getTripsByLicensePlate(userId, licensePlate)
 
 	for rows.Next() {
 		var id int = -1
@@ -104,19 +107,26 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 		var mileage int
 		var licensePlate string
 		var lastChanged time.Time
-		var trip = 0
 
 		err := rows.Scan(&id, &users_id, &description, &dateTime, &pricePerLiterInEuro, &totalAmount, &pricePerLiter, &currency, &mileage, &licensePlate, &lastChanged)
 		if err != nil {
 			logger.Error("Scanning single row failed: %s", err.Error())
+			rows.Close()
 			return RefuelResponse{}, err
 		}
 
-		if counter >= startIndex && counter < startIndex+MAX_RESPONSE_SIZE {
+		logger.Debug("data:")
+		logger.Info("id: %d", id)
+		logger.Info("users_id: %d", users_id)
+		logger.Info("license plate: %s", licensePlate)
+		logger.Info("mileage: %d", mileage)
+		logger.Debug("\n")
+
+		if totalCounter >= startIndex && totalCounter < startIndex+MAX_RESPONSE_SIZE {
 			if id != -1 {
 				validCounter += 1
 			}
-			refuelListBuffer[index] = Refuel{
+			refuelListBuffer[responseListIndex] = Refuel{
 				Id:                  id,
 				Description:         description,
 				DateTime:            dateTime,
@@ -126,12 +136,12 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 				Currency:            currency,
 				Mileage:             mileage,
 				LicensePlate:        licensePlate,
-				Trip:                trip,
+				Trip:                tripMap[id],
 				LastChanged:         lastChanged,
 			}
-			index += 1
+			responseListIndex += 1
 		}
-		counter += 1
+		totalCounter += 1
 	}
 
 	var response RefuelResponse
@@ -139,12 +149,12 @@ func getAllRefuelsByUserId(userId int, startIndex int, licensePlate string, mont
 	if validCounter < MAX_RESPONSE_SIZE {
 		response = RefuelResponse{
 			Refuels:    refuelListBuffer[:validCounter],
-			TotalCount: counter,
+			TotalCount: totalCounter,
 		}
 	} else {
 		response = RefuelResponse{
 			Refuels:    refuelListBuffer[:MAX_RESPONSE_SIZE],
-			TotalCount: counter,
+			TotalCount: totalCounter,
 		}
 	}
 
@@ -159,6 +169,7 @@ func getStatsForEveryYear(userId int, licensePlate string) ([MAX_YEARS_FOR_STATS
 	rows, err := conn.Query(context.Background(), "SELECT date_part('year', date_time) AS year, SUM (total_liter * price_per_liter_euro) AS cost, max(mileage) - min(mileage) AS mileage FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 AND (($2 = 'ALL') OR (license_plate = $2)) GROUP BY year ORDER BY year DESC;", userId, licensePlate)
 	if err != nil {
 		logger.Error("Getting all sats for every year failed: %s", err.Error())
+		rows.Close()
 		return [MAX_YEARS_FOR_STATS]Stat{}, 0
 	}
 
@@ -172,6 +183,7 @@ func getStatsForEveryYear(userId int, licensePlate string) ([MAX_YEARS_FOR_STATS
 		err := rows.Scan(&year, &cost, &mileage)
 		if err != nil {
 			logger.Error("Scanning year, cost, mileage failed: %s", err.Error())
+			rows.Close()
 			return [MAX_YEARS_FOR_STATS]Stat{}, 0
 		}
 
@@ -191,38 +203,39 @@ func convertStringArrayToIntArray(input []string) []int {
 		j, err := strconv.Atoi(i)
 		if err != nil {
 			logger.Error("Cannot convert: %s to int: %s", i, err.Error())
-			panic(err)
+			return []int{}
 		}
 		output = append(output, j)
 	}
 	return output
 }
 
-func calculateAveragOfIntList(inputList []int) int {
+func calculateAverageTrip(inputMap map[int]int) int {
 	var avrg int
-	var size = len(inputList)
+	var size = len(inputMap)
 
-	if len(inputList) <= 0 {
-		logger.Error("Input list is empty")
+	if size <= 0 {
+		logger.Error("Input map is empty")
 		return 0
 	}
 
 	// calculate average mileage difference
-	for i := 0; i < size; i++ {
-		avrg += inputList[i]
+	for _, trip := range inputMap {
+		avrg += trip
 	}
+
 	return avrg / size
 }
 
-func getMileagesPerLicensePlateOrdered(userId int, licensePlate string) []int {
-	var allMileages []int
+func getTripsByLicensePlate(userId int, licensePlate string) map[int]int {
+	var tripMap = make(map[int]int)
 
 	// Get all mileages per license plate
-	mileageRows, err := conn.Query(context.Background(), "select license_plate, STRING_AGG(mileage::varchar(10), ',' order by date_time desc) as mileages FROM (select distinct on (mileage) * from "+REFUEL_TABLE_NAME+" order by mileage, date_time desc) s WHERE users_id=$1 group by license_plate;", userId)
+	mileageRows, err := conn.Query(context.Background(), "select license_plate, STRING_AGG(mileage::varchar(10), ',' order by date_time desc) as mileages, STRING_AGG(id::varchar(10), ',' order by date_time desc) as ids FROM (select distinct on (mileage) * from "+REFUEL_TABLE_NAME+" order by mileage, date_time desc) s WHERE users_id=$1 group by license_plate;", userId)
 	if err != nil {
-		logger.Error("Getting all distances failed: %s", err.Error())
+		logger.Error("Getting all mileages failed: %s", err.Error())
 		mileageRows.Close()
-		return []int{}
+		return tripMap
 	}
 
 	defer mileageRows.Close()
@@ -230,14 +243,29 @@ func getMileagesPerLicensePlateOrdered(userId int, licensePlate string) []int {
 	for mileageRows.Next() {
 		values, err := mileageRows.Values()
 		if err != nil {
-			logger.Error("Failed to get mileager for license plate: %s", err.Error())
+			logger.Error("Failed to get mileage for license plate: %s", err.Error())
 		}
 
+		var idList = convertStringArrayToIntArray(strings.Split(values[2].(string), ","))
+
+		logger.Debug("values: ")
+		logger.Debug("%s", values[0].(string))
+		logger.Debug("%s", values[1].(string))
+		logger.Debug("%s", values[2].(string))
+		logger.Debug("\n")
+
+		// At Index 1 should be the mileage list e.g: 7300,6700,6200,...
 		var stringList = strings.Split(values[1].(string), ",")
+		logger.Debug("String list: %s", stringList)
 
 		// reverse
 		for i, j := 0, len(stringList)-1; i < j; i, j = i+1, j-1 {
 			stringList[i], stringList[j] = stringList[j], stringList[i]
+		}
+
+		// reverse
+		for i, j := 0, len(idList)-1; i < j; i, j = i+1, j-1 {
+			idList[i], idList[j] = idList[j], idList[i]
 		}
 
 		logger.Debug("String list length: %d", len(stringList))
@@ -248,13 +276,12 @@ func getMileagesPerLicensePlateOrdered(userId int, licensePlate string) []int {
 			for i := 0; i < len(intList)-1; i++ {
 				var trip = intList[i+1] - intList[i]
 				logger.Debug("Trip: %d", trip)
-				allMileages = append(allMileages, trip)
+				tripMap[idList[i+1]] = trip
 			}
 		}
 	}
-	logger.Debug("allMileages: %+v", allMileages)
 
-	return allMileages
+	return tripMap
 }
 
 func getAverageDistancePerRefuel(userId int, licensePlate string) int {
@@ -262,8 +289,8 @@ func getAverageDistancePerRefuel(userId int, licensePlate string) int {
 	var totalEntries = 0
 
 	if strings.Compare(strings.ToUpper(licensePlate), "ALL") == 0 {
-		var allMileages = getMileagesPerLicensePlateOrdered(userId, licensePlate)
-		return calculateAveragOfIntList(allMileages)
+		var allTrips = getTripsByLicensePlate(userId, licensePlate)
+		return calculateAverageTrip(allTrips)
 
 	} else {
 		err := conn.QueryRow(context.Background(), "SELECT COUNT(*) AS totalEntries FROM "+REFUEL_TABLE_NAME+" WHERE users_id=$1 AND license_plate = $2", userId, licensePlate).Scan(&totalEntries)
@@ -301,6 +328,7 @@ func getAverageDistancePerRefuel(userId int, licensePlate string) int {
 	}
 
 	if totalEntries <= 1 {
+		mileageRows.Close()
 		return 0
 	}
 
