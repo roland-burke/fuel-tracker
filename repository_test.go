@@ -99,65 +99,6 @@ func TestSaveRefuel(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestSaveRefuelWithBadMileage(t *testing.T) {
-	assert := assert.New(t)
-
-	// Setup
-	var userId = 1
-
-	var refuelWithInvalidMileage = Refuel{
-		Id:                  4,
-		Description:         "TestRefuel1",
-		DateTime:            time.Now(),
-		PricePerLiterInEuro: 1.2,
-		TotalAmount:         35,
-		PricePerLiter:       40,
-		Currency:            "Chf",
-		Mileage:             300,
-		LicensePlate:        "KN-KN-9999",
-		LastChanged:         time.Now(),
-	}
-
-	// When
-	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
-
-	// Then
-	assert.NotNil(err)
-	assert.Equal(-1, refuelId)
-	assert.Equal("ERROR: Mileage has already been reached (SQLSTATE P0001)", err.Error())
-}
-
-/*
-func TestSaveRefuelWithUnrealisticDate(t *testing.T) {
-	assert := assert.New(t)
-
-	// Setup
-	var userId = 1
-	var unrealisticTime, _ = time.Parse("2006-02-01T15:04:05", "1950-09-05T16:34:25")
-
-	var refuelWithInvalidMileage = Refuel{
-		Id:                  4,
-		Description:         "TestRefuel1",
-		DateTime:            unrealisticTime,
-		PricePerLiterInEuro: 1.2,
-		TotalAmount:         35,
-		PricePerLiter:       40,
-		Currency:            "Chf",
-		Mileage:             390789,
-		LicensePlate:        "KN-KN-9999",
-		LastChanged:         time.Now(),
-	}
-
-	// When
-	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
-
-	// Then
-	assert.NotNil(err)
-	assert.Equal(-1, refuelId)
-	assert.Equal("ERROR: new row for relation \"refuel\" violates check constraint \"realistic_date\" (SQLSTATE 23514)", err.Error())
-}
-*/
-
 func TestUpdateRefuelByUserId(t *testing.T) {
 	assert := assert.New(t)
 	var userId = 1
@@ -165,6 +106,8 @@ func TestUpdateRefuelByUserId(t *testing.T) {
 	// Setup
 	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
 	assert.Nil(err)
+
+	exampleRefuelObj2_repository.Id = refuelId
 
 	// When
 	err = updateRefuelByUserId(exampleRefuelObj2_repository, userId)
@@ -250,4 +193,250 @@ func TestGetStatisticsByUserId(t *testing.T) {
 
 	assert.Equal(expectedStats.TotalCost, statistics.TotalCost)
 	assert.Equal(expectedStats.TotalMileage, statistics.TotalMileage)
+}
+
+func TestPaging(t *testing.T) {
+	assert := assert.New(t)
+	var userId = 1
+
+	testObj1 := Refuel{
+		Id:                  0,
+		Description:         "paging-test1",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             200500,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj2 := Refuel{
+		Id:                  0,
+		Description:         "paging-test2",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             200600,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj3 := Refuel{
+		Id:                  0,
+		Description:         "paging-test4",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             200700,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj4 := Refuel{
+		Id:                  0,
+		Description:         "paging-test4",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             200800,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj5 := Refuel{
+		Id:                  0,
+		Description:         "paging-test5",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             200900,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj6 := Refuel{
+		Id:                  0,
+		Description:         "paging-test6",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             201000,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj7 := Refuel{
+		Id:                  0,
+		Description:         "paging-test7",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             201100,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj8 := Refuel{
+		Id:                  0,
+		Description:         "paging-test8",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             201200,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	testObj9 := Refuel{
+		Id:                  0,
+		Description:         "paging-test9",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             201300,
+		LicensePlate:        "KN-KN-2323",
+		LastChanged:         time.Now(),
+	}
+
+	refuelId1, err := saveRefuelByUserId(testObj1, userId)
+	assert.Nil(err)
+	refuelId2, err := saveRefuelByUserId(testObj2, userId)
+	assert.Nil(err)
+	refuelId3, err := saveRefuelByUserId(testObj3, userId)
+	assert.Nil(err)
+
+	result, err := getAllRefuelsByUserId(userId, 0, "KN-KN-2323", 0, 0)
+	assert.Nil(err)
+
+	assert.Equal(3, result.TotalCount)
+	assert.Equal(3, len(result.Refuels))
+
+	result, err = getAllRefuelsByUserId(userId, 1, "KN-KN-2323", 0, 0)
+	assert.Nil(err)
+
+	assert.Equal(3, result.TotalCount)
+	assert.Equal(2, len(result.Refuels))
+
+	refuelId4, err := saveRefuelByUserId(testObj4, userId)
+	assert.Nil(err)
+	refuelId5, err := saveRefuelByUserId(testObj5, userId)
+	assert.Nil(err)
+	refuelId6, err := saveRefuelByUserId(testObj6, userId)
+	assert.Nil(err)
+	refuelId7, err := saveRefuelByUserId(testObj7, userId)
+	assert.Nil(err)
+	refuelId8, err := saveRefuelByUserId(testObj8, userId)
+	assert.Nil(err)
+	refuelId9, err := saveRefuelByUserId(testObj9, userId)
+	assert.Nil(err)
+
+	result1, err := getAllRefuelsByUserId(userId, 0, "KN-KN-2323", 0, 0)
+	assert.Nil(err)
+
+	assert.Equal(9, result1.TotalCount)
+	assert.Equal(8, len(result1.Refuels))
+
+	result2, err := getAllRefuelsByUserId(userId, 5, "KN-KN-2323", 0, 0)
+	assert.Nil(err)
+
+	assert.Equal(9, result2.TotalCount)
+	assert.Equal(4, len(result2.Refuels))
+
+	// cleanup
+	err = deleteRefuelByUserId(refuelId1, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId2, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId3, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId4, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId5, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId6, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId7, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId8, userId)
+	assert.Nil(err)
+	err = deleteRefuelByUserId(refuelId9, userId)
+	assert.Nil(err)
+
+}
+
+// === Test Database Constraints ===
+
+func TestSaveRefuelWithBadMileage(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup
+	var userId = 1
+
+	var refuelWithInvalidMileage = Refuel{
+		Id:                  4,
+		Description:         "TestRefuel1",
+		DateTime:            time.Now(),
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             300,
+		LicensePlate:        "KN-KN-9999",
+		LastChanged:         time.Now(),
+	}
+
+	// When
+	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
+
+	// Then
+	assert.NotNil(err)
+	assert.Equal(-1, refuelId)
+	assert.Equal("ERROR: Mileage has already been reached (SQLSTATE P0001)", err.Error())
+}
+
+func TestSaveRefuelWithUnrealisticDate(t *testing.T) {
+	assert := assert.New(t)
+
+	// Setup
+	var userId = 1
+	var unrealisticTime, _ = time.Parse("2006-02-01T15:04:05", "1950-09-05T16:34:25")
+
+	var refuelWithInvalidMileage = Refuel{
+		Id:                  4,
+		Description:         "TestRefuel1",
+		DateTime:            unrealisticTime,
+		PricePerLiterInEuro: 1.2,
+		TotalAmount:         35,
+		PricePerLiter:       40,
+		Currency:            "Chf",
+		Mileage:             390789,
+		LicensePlate:        "KN-KN-9999",
+		LastChanged:         time.Now(),
+	}
+
+	// When
+	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
+
+	// Then
+	assert.NotNil(err)
+	assert.Equal(-1, refuelId)
+	assert.Equal("ERROR: new row for relation \"refuel\" violates check constraint \"realistic_date\" (SQLSTATE 23514)", err.Error())
 }

@@ -13,8 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test data
-
 var timeObj_server, err = time.Parse("2006-01-02T15:04:05", "2021-09-04T13:10:25")
 var exampleRefuelObj1_server = DefaultRequest{
 	Payload: []Refuel{
@@ -27,22 +25,6 @@ var exampleRefuelObj1_server = DefaultRequest{
 			PricePerLiter:       0.0,
 			Currency:            "chf",
 			Mileage:             98030.0,
-			LicensePlate:        "KN-KN-9999",
-		},
-	},
-}
-
-var exampleRefuelObj2_server = DefaultRequest{
-	Payload: []Refuel{
-		{
-			Id:                  8,
-			Description:         "testmethod",
-			DateTime:            timeObj_server,
-			PricePerLiterInEuro: 1.34,
-			TotalAmount:         45.0,
-			PricePerLiter:       0.0,
-			Currency:            "chf",
-			Mileage:             120030.0,
 			LicensePlate:        "KN-KN-9999",
 		},
 	},
@@ -211,16 +193,46 @@ func TestAddRefuel(t *testing.T) {
 }
 
 func TestUpdateRefuel(t *testing.T) {
+	var objectToBeUpdated = Refuel{
+		Id:                  0,
+		Description:         "testmethod",
+		DateTime:            timeObj_server,
+		PricePerLiterInEuro: 1.34,
+		TotalAmount:         45.0,
+		PricePerLiter:       0.0,
+		Currency:            "chf",
+		Mileage:             125050.0,
+		LicensePlate:        "KN-KN-5555",
+	}
+
+	var updateRequest = DefaultRequest{
+		Payload: []Refuel{
+			{
+				Id:                  0,
+				Description:         "updated",
+				DateTime:            timeObj_server,
+				PricePerLiterInEuro: 1.34,
+				TotalAmount:         50.0,
+				PricePerLiter:       0.0,
+				Currency:            "chf",
+				Mileage:             120030.0,
+				LicensePlate:        "KN-KN-9999",
+			},
+		},
+	}
+
 	assert := assert.New(t)
 	var userId = 1
 
 	// setup
 	recorder := httptest.NewRecorder()
 
-	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_server.Payload[0], userId)
+	refuelId, err := saveRefuelByUserId(objectToBeUpdated, userId)
 	assert.Nil(err)
 
-	json, err := json.Marshal(exampleRefuelObj2_server)
+	updateRequest.Payload[0].Id = refuelId
+
+	json, err := json.Marshal(updateRequest)
 	req, err := http.NewRequest("POST", "/whatever", bytes.NewBuffer(json))
 	assert.Nil(err)
 
@@ -241,13 +253,25 @@ func TestUpdateRefuel(t *testing.T) {
 }
 
 func TestDeleteRefuel(t *testing.T) {
+	var objectToBeDeleted = Refuel{
+		Id:                  0,
+		Description:         "testmethod",
+		DateTime:            timeObj_server,
+		PricePerLiterInEuro: 1.34,
+		TotalAmount:         45.0,
+		PricePerLiter:       0.0,
+		Currency:            "chf",
+		Mileage:             125050.0,
+		LicensePlate:        "KN-KN-5555",
+	}
+
 	assert := assert.New(t)
 	var userId = 1
 
 	// setup
 	recorder := httptest.NewRecorder()
 
-	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_server.Payload[0], userId)
+	refuelId, err := saveRefuelByUserId(objectToBeDeleted, userId)
 	assert.Nil(err)
 
 	req, err := http.NewRequest("DELETE", "/whatever", bytes.NewBuffer([]byte(fmt.Sprintf("{\"id\": %d}", refuelId))))
