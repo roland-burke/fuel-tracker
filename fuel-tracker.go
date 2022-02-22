@@ -26,7 +26,7 @@ func printConfig(conf Configuration) {
 }
 
 func main() {
-	logger = rollogger.Init(rollogger.DEBUG_LEVEL, true, true)
+	logger = rollogger.Init(rollogger.INFO_LEVEL, true, true)
 	var config = readConfig()
 	apiKey = config.ApiKey
 	if apiKey == "willbeoverwritten" || apiKey == "CHANGEME" {
