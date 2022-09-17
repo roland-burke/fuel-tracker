@@ -47,3 +47,6 @@ services:
     environment:
       - PGADMIN_DEFAULT_EMAIL=${PG_ADMIN_USER}
       - PGADMIN_DEFAULT_PASSWORD=${PG_ADMIN_PASSWORD}
+
+volumes:
+  pg-admin-conf:
