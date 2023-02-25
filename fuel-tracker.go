@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strconv"
 
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/roland-burke/rollogger"
@@ -28,6 +29,7 @@ func printConfig(conf Configuration) {
 func main() {
 	logger = rollogger.Init(rollogger.INFO_LEVEL, true, true)
 	var config = readConfig()
+	updateConfigFromEnvironment(config)
 	apiKey = config.ApiKey
 	if apiKey == "willbeoverwritten" || apiKey == "CHANGEME" {
 		logger.Warn("Invalid Apikey: %s\nEither it wasn't changed or something went wrong!\n", apiKey)
@@ -53,6 +55,35 @@ func initDb() {
 		logger.Error("Unable to connect to database: %s", err.Error())
 		os.Exit(1)
 	}
+}
+
+func updateConfigFromEnvironment(config Configuration) {
+	var desc = os.Getenv("FT_DESCRIPTION")
+	if desc != "" {
+		config.Description = desc
+		logger.Info("Set config.description from ENV: '%s'", desc)
+	}
+	var apiKey = os.Getenv("FT_API-KEY")
+	if apiKey != "" {
+		config.ApiKey = apiKey
+		logger.Info("Set config.apikey from ENV: '%s'", apiKey[0:5]+"...")
+	}
+	var port = os.Getenv("FT_PORT")
+	if port != "" {
+		portInt, err := strconv.Atoi(port)
+		if err != nil {
+			logger.Warn("Invalid port from ENV: %s", portInt)
+		} else {
+			logger.Info("Set config.port from ENV: %d", portInt)
+			config.Port = portInt
+		}
+	}
+	var urlPrefix = os.Getenv("FT_URL-PREFIX")
+	if urlPrefix != "" {
+		config.UrlPrefix = urlPrefix
+		logger.Info("Set config.urlPrefifx from ENV: '%s'", urlPrefix)
+	}
+
 }
 
 func readConfig() Configuration {
