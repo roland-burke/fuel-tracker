@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"bytes"
@@ -9,13 +9,16 @@ import (
 	"testing"
 	"time"
 
+	"github.com/roland-burke/fuel-tracker/internal/config"
+	"github.com/roland-burke/fuel-tracker/internal/model"
+	"github.com/roland-burke/fuel-tracker/internal/repository"
 	"github.com/roland-burke/rollogger"
 	"github.com/stretchr/testify/assert"
 )
 
 var timeObj_server, err = time.Parse("2006-01-02T15:04:05", "2021-09-04T13:10:25")
-var exampleRefuelObj1_server = DefaultRequest{
-	Payload: []Refuel{
+var exampleRefuelObj1_server = model.DefaultRequest{
+	Payload: []model.Refuel{
 		{
 			Id:                  7,
 			Description:         "testmethod",
@@ -32,8 +35,8 @@ var exampleRefuelObj1_server = DefaultRequest{
 
 func init() {
 	// Mute the logger
-	logger = rollogger.Init(rollogger.ERROR_LEVEL, true, true)
-	initDb()
+	config.Logger = rollogger.Init(rollogger.ERROR_LEVEL, true, true)
+	repository.InitDb()
 }
 
 func TestSendResponseWithMessageAndStatus(t *testing.T) {
@@ -52,7 +55,7 @@ func TestIntermediate(t *testing.T) {
 	assert := assert.New(t)
 
 	// setup
-	apiKey = "asdfasdf"
+	config.ApiKey = "asdfasdf"
 	recorder := httptest.NewRecorder()
 
 	req, err := http.NewRequest("GET", "/whatever", nil)
@@ -139,8 +142,8 @@ func TestGetStatistics(t *testing.T) {
 	req, err := http.NewRequest("GET", "/whatever", nil)
 	assert.Nil(err)
 
-	expectedStats := StatisticsResponse{
-		Stats:        []Stat{},
+	expectedStats := model.StatisticsResponse{
+		Stats:        []model.Stat{},
 		TotalMileage: 700,
 		TotalCost:    123.75,
 	}
@@ -155,7 +158,7 @@ func TestGetStatistics(t *testing.T) {
 	defer res.Body.Close()
 
 	decoder := json.NewDecoder(res.Body)
-	var statsResponse StatisticsResponse
+	var statsResponse model.StatisticsResponse
 	err = decoder.Decode(&statsResponse)
 	assert.Nil(err)
 
@@ -189,11 +192,11 @@ func TestAddRefuel(t *testing.T) {
 
 	// Cleanup
 
-	deleteRefuelByUserId(exampleRefuelObj1_server.Payload[0].Id, userId)
+	repository.DeleteRefuelByUserId(exampleRefuelObj1_server.Payload[0].Id, userId)
 }
 
 func TestUpdateRefuel(t *testing.T) {
-	var objectToBeUpdated = Refuel{
+	var objectToBeUpdated = model.Refuel{
 		Id:                  0,
 		Description:         "testmethod",
 		DateTime:            timeObj_server,
@@ -205,8 +208,8 @@ func TestUpdateRefuel(t *testing.T) {
 		LicensePlate:        "KN-KN-5555",
 	}
 
-	var updateRequest = DefaultRequest{
-		Payload: []Refuel{
+	var updateRequest = model.DefaultRequest{
+		Payload: []model.Refuel{
 			{
 				Id:                  0,
 				Description:         "updated",
@@ -227,7 +230,7 @@ func TestUpdateRefuel(t *testing.T) {
 	// setup
 	recorder := httptest.NewRecorder()
 
-	refuelId, err := saveRefuelByUserId(objectToBeUpdated, userId)
+	refuelId, err := repository.SaveRefuelByUserId(objectToBeUpdated, userId)
 	assert.Nil(err)
 
 	updateRequest.Payload[0].Id = refuelId
@@ -248,12 +251,12 @@ func TestUpdateRefuel(t *testing.T) {
 	assert.Equal("Successfully updated", recorder.Body.String())
 
 	// Cleanup
-	err = deleteRefuelByUserId(refuelId, userId)
+	err = repository.DeleteRefuelByUserId(refuelId, userId)
 	assert.Nil(err)
 }
 
 func TestDeleteRefuel(t *testing.T) {
-	var objectToBeDeleted = Refuel{
+	var objectToBeDeleted = model.Refuel{
 		Id:                  0,
 		Description:         "testmethod",
 		DateTime:            timeObj_server,
@@ -271,7 +274,7 @@ func TestDeleteRefuel(t *testing.T) {
 	// setup
 	recorder := httptest.NewRecorder()
 
-	refuelId, err := saveRefuelByUserId(objectToBeDeleted, userId)
+	refuelId, err := repository.SaveRefuelByUserId(objectToBeDeleted, userId)
 	assert.Nil(err)
 
 	req, err := http.NewRequest("DELETE", "/whatever", bytes.NewBuffer([]byte(fmt.Sprintf("{\"id\": %d}", refuelId))))

@@ -1,23 +1,25 @@
-package main
+package repository
 
 import (
 	"testing"
 	"time"
 
+	"github.com/roland-burke/fuel-tracker/internal/config"
+	"github.com/roland-burke/fuel-tracker/internal/model"
 	"github.com/roland-burke/rollogger"
 	"github.com/stretchr/testify/assert"
 )
 
 func init() {
 	// Mute the logger
-	logger = rollogger.Init(rollogger.ERROR_LEVEL, true, true)
-	initDb()
+	config.Logger = rollogger.Init(rollogger.ERROR_LEVEL, true, true)
+	InitDb()
 }
 
 var timeObj1_repository, _ = time.Parse("2006-02-01T15:04:05", "2021-09-04T13:10:25")
 var timeObj2_repository, _ = time.Parse("2006-02-01T15:04:05", "2021-09-05T16:34:25")
 
-var exampleRefuelObj1_repository = Refuel{
+var exampleRefuelObj1_repository = model.Refuel{
 	Id:                  4,
 	Description:         "TestRefuel1",
 	DateTime:            timeObj1_repository,
@@ -30,7 +32,7 @@ var exampleRefuelObj1_repository = Refuel{
 	LastChanged:         time.Now(),
 }
 
-var exampleRefuelObj2_repository = Refuel{
+var exampleRefuelObj2_repository = model.Refuel{
 	Id:                  5,
 	Description:         "TestRefuel2",
 	DateTime:            timeObj2_repository,
@@ -51,9 +53,9 @@ func TestGetUserIdByCredentials(t *testing.T) {
 	var expectedUserIdMary = 2
 	var expecteduserIdInvalid = -1
 
-	var userIdJohn = getUserIdByCredentials("john", "john")
-	var userIdMary = getUserIdByCredentials("mary", "mary")
-	var userIdInvalid = getUserIdByCredentials("not-existing", "asdf")
+	var userIdJohn = GetUserIdByCredentials("john", "john")
+	var userIdMary = GetUserIdByCredentials("mary", "mary")
+	var userIdInvalid = GetUserIdByCredentials("not-existing", "asdf")
 
 	// Then
 	assert.Equal(expectedUserIdJohn, userIdJohn)
@@ -65,7 +67,7 @@ func TestGetCredentials(t *testing.T) {
 	assert := assert.New(t)
 
 	// When
-	err, username, password := getCredentials("john")
+	err, username, password := GetCredentials("john")
 
 	// Then
 	assert.Nil(err)
@@ -73,7 +75,7 @@ func TestGetCredentials(t *testing.T) {
 	assert.Equal("john", password)
 
 	// When
-	err, username, password = getCredentials("not_exist")
+	err, username, password = GetCredentials("not_exist")
 
 	// Then
 	assert.NotNil(err)
@@ -88,14 +90,14 @@ func TestSaveRefuel(t *testing.T) {
 	var userId = 1
 
 	// When
-	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
+	refuelId, err := SaveRefuelByUserId(exampleRefuelObj1_repository, userId)
 
 	// Then
 	assert.Nil(err)
 	assert.Equal(refuelId, refuelId)
 
 	// Cleanup
-	err = deleteRefuelByUserId(refuelId, userId)
+	err = DeleteRefuelByUserId(refuelId, userId)
 	assert.Nil(err)
 }
 
@@ -104,16 +106,16 @@ func TestUpdateRefuelByUserId(t *testing.T) {
 	var userId = 1
 
 	// Setup
-	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
+	refuelId, err := SaveRefuelByUserId(exampleRefuelObj1_repository, userId)
 	assert.Nil(err)
 
 	exampleRefuelObj2_repository.Id = refuelId
 
 	// When
-	err = updateRefuelByUserId(exampleRefuelObj2_repository, userId)
+	err = UpdateRefuelByUserId(exampleRefuelObj2_repository, userId)
 	assert.Nil(err)
 
-	refuelResponse, err := getAllRefuelsByUserId(userId, 0, "KN-KN-9999", 0, 0)
+	refuelResponse, err := GetAllRefuelsByUserId(userId, 0, "KN-KN-9999", 0, 0)
 	assert.Nil(err)
 
 	// Then
@@ -129,7 +131,7 @@ func TestUpdateRefuelByUserId(t *testing.T) {
 	assert.Equal(exampleRefuelObj2_repository.LicensePlate, targetRefuel.LicensePlate)
 
 	// Cleanup
-	err = deleteRefuelByUserId(refuelId, userId)
+	err = DeleteRefuelByUserId(refuelId, userId)
 	assert.Nil(err)
 }
 
@@ -139,21 +141,21 @@ func TestDeleteRefuelByUserId(t *testing.T) {
 	// Setup
 	var userId = 1
 
-	refuelId, err := saveRefuelByUserId(exampleRefuelObj1_repository, userId)
+	refuelId, err := SaveRefuelByUserId(exampleRefuelObj1_repository, userId)
 	assert.Nil(err)
 
 	// Test
-	err = deleteRefuelByUserId(refuelId, userId)
+	err = DeleteRefuelByUserId(refuelId, userId)
 	assert.Nil(err)
 
-	err = deleteRefuelByUserId(refuelId, userId)
+	err = DeleteRefuelByUserId(refuelId, userId)
 	assert.NotNil(err)
 }
 
 func TestGetAllRefuels(t *testing.T) {
 	assert := assert.New(t)
 
-	refuel := Refuel{
+	refuel := model.Refuel{
 		Id:                  0,
 		Description:         "Test",
 		DateTime:            time.Now(),
@@ -166,14 +168,14 @@ func TestGetAllRefuels(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	expectedRefuelResponse := RefuelResponse{
-		Refuels:    []Refuel{refuel},
+	expectedRefuelResponse := model.RefuelResponse{
+		Refuels:    []model.Refuel{refuel},
 		TotalCount: 2,
 	}
 
 	var userId = 1
 
-	refuelResponse, err := getAllRefuelsByUserId(userId, 0, "KN-KN-9999", 0, 0)
+	refuelResponse, err := GetAllRefuelsByUserId(userId, 0, "KN-KN-9999", 0, 0)
 	assert.Nil(err)
 
 	assert.Equal(expectedRefuelResponse.TotalCount, refuelResponse.TotalCount)
@@ -183,13 +185,13 @@ func TestGetStatisticsByUserId(t *testing.T) {
 	assert := assert.New(t)
 
 	// Setup
-	expectedStats := StatisticsResponse{
-		Stats:        []Stat{},
+	expectedStats := model.StatisticsResponse{
+		Stats:        []model.Stat{},
 		TotalMileage: 700,
 		TotalCost:    123.75,
 	}
 
-	statistics := getStatisticsByUserId(1, "ALL")
+	statistics := GetStatisticsByUserId(1, "ALL")
 
 	assert.Equal(expectedStats.TotalCost, statistics.TotalCost)
 	assert.Equal(expectedStats.TotalMileage, statistics.TotalMileage)
@@ -199,7 +201,7 @@ func TestPaging(t *testing.T) {
 	assert := assert.New(t)
 	var userId = 1
 
-	testObj1 := Refuel{
+	testObj1 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test1",
 		DateTime:            time.Now(),
@@ -212,7 +214,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj2 := Refuel{
+	testObj2 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test2",
 		DateTime:            time.Now(),
@@ -225,7 +227,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj3 := Refuel{
+	testObj3 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test4",
 		DateTime:            time.Now(),
@@ -238,7 +240,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj4 := Refuel{
+	testObj4 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test4",
 		DateTime:            time.Now(),
@@ -251,7 +253,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj5 := Refuel{
+	testObj5 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test5",
 		DateTime:            time.Now(),
@@ -264,7 +266,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj6 := Refuel{
+	testObj6 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test6",
 		DateTime:            time.Now(),
@@ -277,7 +279,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj7 := Refuel{
+	testObj7 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test7",
 		DateTime:            time.Now(),
@@ -290,7 +292,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj8 := Refuel{
+	testObj8 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test8",
 		DateTime:            time.Now(),
@@ -303,7 +305,7 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	testObj9 := Refuel{
+	testObj9 := model.Refuel{
 		Id:                  0,
 		Description:         "paging-test9",
 		DateTime:            time.Now(),
@@ -316,68 +318,68 @@ func TestPaging(t *testing.T) {
 		LastChanged:         time.Now(),
 	}
 
-	refuelId1, err := saveRefuelByUserId(testObj1, userId)
+	refuelId1, err := SaveRefuelByUserId(testObj1, userId)
 	assert.Nil(err)
-	refuelId2, err := saveRefuelByUserId(testObj2, userId)
+	refuelId2, err := SaveRefuelByUserId(testObj2, userId)
 	assert.Nil(err)
-	refuelId3, err := saveRefuelByUserId(testObj3, userId)
+	refuelId3, err := SaveRefuelByUserId(testObj3, userId)
 	assert.Nil(err)
 
-	result, err := getAllRefuelsByUserId(userId, 0, "KN-KN-2323", 0, 0)
+	result, err := GetAllRefuelsByUserId(userId, 0, "KN-KN-2323", 0, 0)
 	assert.Nil(err)
 
 	assert.Equal(3, result.TotalCount)
 	assert.Equal(3, len(result.Refuels))
 
-	result, err = getAllRefuelsByUserId(userId, 1, "KN-KN-2323", 0, 0)
+	result, err = GetAllRefuelsByUserId(userId, 1, "KN-KN-2323", 0, 0)
 	assert.Nil(err)
 
 	assert.Equal(3, result.TotalCount)
 	assert.Equal(2, len(result.Refuels))
 
-	refuelId4, err := saveRefuelByUserId(testObj4, userId)
+	refuelId4, err := SaveRefuelByUserId(testObj4, userId)
 	assert.Nil(err)
-	refuelId5, err := saveRefuelByUserId(testObj5, userId)
+	refuelId5, err := SaveRefuelByUserId(testObj5, userId)
 	assert.Nil(err)
-	refuelId6, err := saveRefuelByUserId(testObj6, userId)
+	refuelId6, err := SaveRefuelByUserId(testObj6, userId)
 	assert.Nil(err)
-	refuelId7, err := saveRefuelByUserId(testObj7, userId)
+	refuelId7, err := SaveRefuelByUserId(testObj7, userId)
 	assert.Nil(err)
-	refuelId8, err := saveRefuelByUserId(testObj8, userId)
+	refuelId8, err := SaveRefuelByUserId(testObj8, userId)
 	assert.Nil(err)
-	refuelId9, err := saveRefuelByUserId(testObj9, userId)
+	refuelId9, err := SaveRefuelByUserId(testObj9, userId)
 	assert.Nil(err)
 
-	result1, err := getAllRefuelsByUserId(userId, 0, "KN-KN-2323", 0, 0)
+	result1, err := GetAllRefuelsByUserId(userId, 0, "KN-KN-2323", 0, 0)
 	assert.Nil(err)
 
 	assert.Equal(9, result1.TotalCount)
 	assert.Equal(8, len(result1.Refuels))
 
-	result2, err := getAllRefuelsByUserId(userId, 5, "KN-KN-2323", 0, 0)
+	result2, err := GetAllRefuelsByUserId(userId, 5, "KN-KN-2323", 0, 0)
 	assert.Nil(err)
 
 	assert.Equal(9, result2.TotalCount)
 	assert.Equal(4, len(result2.Refuels))
 
 	// cleanup
-	err = deleteRefuelByUserId(refuelId1, userId)
+	err = DeleteRefuelByUserId(refuelId1, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId2, userId)
+	err = DeleteRefuelByUserId(refuelId2, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId3, userId)
+	err = DeleteRefuelByUserId(refuelId3, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId4, userId)
+	err = DeleteRefuelByUserId(refuelId4, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId5, userId)
+	err = DeleteRefuelByUserId(refuelId5, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId6, userId)
+	err = DeleteRefuelByUserId(refuelId6, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId7, userId)
+	err = DeleteRefuelByUserId(refuelId7, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId8, userId)
+	err = DeleteRefuelByUserId(refuelId8, userId)
 	assert.Nil(err)
-	err = deleteRefuelByUserId(refuelId9, userId)
+	err = DeleteRefuelByUserId(refuelId9, userId)
 	assert.Nil(err)
 
 }
@@ -390,7 +392,7 @@ func TestSaveRefuelWithBadMileage(t *testing.T) {
 	// Setup
 	var userId = 1
 
-	var refuelWithInvalidMileage = Refuel{
+	var refuelWithInvalidMileage = model.Refuel{
 		Id:                  4,
 		Description:         "TestRefuel1",
 		DateTime:            time.Now(),
@@ -404,7 +406,7 @@ func TestSaveRefuelWithBadMileage(t *testing.T) {
 	}
 
 	// When
-	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
+	refuelId, err := SaveRefuelByUserId(refuelWithInvalidMileage, userId)
 
 	// Then
 	assert.NotNil(err)
@@ -419,7 +421,7 @@ func TestSaveRefuelWithUnrealisticDate(t *testing.T) {
 	var userId = 1
 	var unrealisticTime, _ = time.Parse("2006-02-01T15:04:05", "1950-09-05T16:34:25")
 
-	var refuelWithInvalidMileage = Refuel{
+	var refuelWithInvalidMileage = model.Refuel{
 		Id:                  4,
 		Description:         "TestRefuel1",
 		DateTime:            unrealisticTime,
@@ -433,7 +435,7 @@ func TestSaveRefuelWithUnrealisticDate(t *testing.T) {
 	}
 
 	// When
-	refuelId, err := saveRefuelByUserId(refuelWithInvalidMileage, userId)
+	refuelId, err := SaveRefuelByUserId(refuelWithInvalidMileage, userId)
 
 	// Then
 	assert.NotNil(err)

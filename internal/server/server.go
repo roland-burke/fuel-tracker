@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"encoding/json"
@@ -8,9 +8,12 @@ import (
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/roland-burke/fuel-tracker/internal/config"
+	"github.com/roland-burke/fuel-tracker/internal/model"
+	"github.com/roland-burke/fuel-tracker/internal/repository"
 )
 
-func startServer(port int, urlPrefix string) {
+func StartServer(port int, urlPrefix string) {
 	// Here we are instantiating the gorilla/mux router
 	r := mux.NewRouter()
 
@@ -26,7 +29,7 @@ func startServer(port int, urlPrefix string) {
 	r.HandleFunc(fmt.Sprintf("%s/api/statistics", urlPrefix), getStatistics).Methods("GET")
 	r.Use(middleware)
 
-	logger.Info("Listening on port: %d", port)
+	config.Logger.Info("Listening on port: %d", port)
 	http.ListenAndServe(fmt.Sprintf(":%d", port), r)
 }
 
@@ -43,10 +46,10 @@ func middleware(next http.Handler) http.Handler {
 }
 
 func intermediate(w http.ResponseWriter, r *http.Request, next http.Handler) {
-	logger.Info("Request from: %s %s", r.RemoteAddr, r.URL)
+	config.Logger.Info("Request from: %s %s", r.RemoteAddr, r.URL)
 	var apiKeyFromClient = r.Header.Get("auth")
 
-	if apiKeyFromClient == apiKey {
+	if apiKeyFromClient == config.ApiKey {
 		credentialsValid := checkCredentials(r)
 
 		if credentialsValid {
@@ -57,21 +60,21 @@ func intermediate(w http.ResponseWriter, r *http.Request, next http.Handler) {
 		}
 	} else {
 		// No api permission
-		logger.Warn("Invalid Apikey: %s", apiKeyFromClient)
+		config.Logger.Warn("Invalid Apikey: %s", apiKeyFromClient)
 		sendResponseWithMessageAndStatus(w, http.StatusUnauthorized, "API access denied!")
 	}
 }
 
 func checkCredentials(r *http.Request) bool {
-	creds := Credentials{
+	creds := model.Credentials{
 		Username: r.Header.Get("username"),
 		Password: r.Header.Get("password"),
 	}
 
-	err, username, password := getCredentials(creds.Username)
+	err, username, password := repository.GetCredentials(creds.Username)
 
 	if err != nil {
-		logger.Error("Credentials check failed: %s", err.Error())
+		config.Logger.Error("Credentials check failed: %s", err.Error())
 		return false
 	}
 
@@ -81,15 +84,15 @@ func checkCredentials(r *http.Request) bool {
 	return (usernameEqual && passwordEqual)
 }
 
-func getDefaultRequestObj(w http.ResponseWriter, r *http.Request) (DefaultRequest, error) {
+func getDefaultRequestObj(w http.ResponseWriter, r *http.Request) (model.DefaultRequest, error) {
 	decoder := json.NewDecoder(r.Body)
 
-	var defaultRequest DefaultRequest
+	var defaultRequest model.DefaultRequest
 	err := decoder.Decode(&defaultRequest)
 	if err != nil {
-		logger.Error("Decoding request failed: %s", err.Error())
+		config.Logger.Error("Decoding request failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusBadRequest, "Failed to decode request")
-		return DefaultRequest{}, err
+		return model.DefaultRequest{}, err
 	}
 	return defaultRequest, nil
 }
@@ -104,7 +107,7 @@ func getStatistics(w http.ResponseWriter, r *http.Request) {
 	if len(params) >= 1 {
 		licensePlate = params[0]
 	}
-	response := getStatisticsByUserId(getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")), licensePlate)
+	response := repository.GetStatisticsByUserId(repository.GetUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")), licensePlate)
 
 	responseJson, err := json.Marshal(response)
 	if err != nil {
@@ -120,9 +123,9 @@ func addRefuel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = saveRefuelByUserId(request.Payload[0], getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
+	_, err = repository.SaveRefuelByUserId(request.Payload[0], repository.GetUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
-		logger.Error("Saving refuel failed: %s", err.Error())
+		config.Logger.Error("Saving refuel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -134,9 +137,9 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		return
 	}
-	err = updateRefuelByUserId(request.Payload[0], getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
+	err = repository.UpdateRefuelByUserId(request.Payload[0], repository.GetUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
-		logger.Error("Updating refuel failed: %s", err.Error())
+		config.Logger.Error("Updating refuel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -146,17 +149,17 @@ func updateRefuel(w http.ResponseWriter, r *http.Request) {
 func deleteRefuel(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 
-	var deletion DeletionRequest
+	var deletion model.DeletionRequest
 	err := decoder.Decode(&deletion)
 	if err != nil {
-		logger.Error("Decoding deletion request failed:: %s", err.Error())
+		config.Logger.Error("Decoding deletion request failed:: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusBadRequest, "invalid delete request")
 		return
 	}
 
-	err = deleteRefuelByUserId(deletion.Id, getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
+	err = repository.DeleteRefuelByUserId(deletion.Id, repository.GetUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")))
 	if err != nil {
-		logger.Error("Deleting reufel failed: %s", err.Error())
+		config.Logger.Error("Deleting reufel failed: %s", err.Error())
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -180,11 +183,11 @@ func getAllRefuels(w http.ResponseWriter, r *http.Request) {
 		month, err = strconv.Atoi(values["month"][0])
 		year, err = strconv.Atoi(values["year"][0])
 		if err != nil {
-			logger.Error("Parsing query params failed: %s - %s", values, err)
+			config.Logger.Error("Parsing query params failed: %s - %s", values, err)
 		}
 	}
 
-	response, err := getAllRefuelsByUserId(getUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")), startIndex, licensePlate, month, year)
+	response, err := repository.GetAllRefuelsByUserId(repository.GetUserIdByCredentials(r.Header.Get("username"), r.Header.Get("password")), startIndex, licensePlate, month, year)
 	if err != nil {
 		sendResponseWithMessageAndStatus(w, http.StatusInternalServerError, err.Error())
 		return

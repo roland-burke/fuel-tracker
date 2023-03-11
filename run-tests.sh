@@ -20,7 +20,7 @@ docker cp database/test/init.sql ${CONTAINER_NAME}:init.sql
 docker exec -d ${CONTAINER_NAME} psql -U postgres -d ${DB_NAME} -f init.sql
 
 # run tests
-PGX_TEST_DATABASE="host=/var/run/postgresql database=${DB_NAME}" DATABASE_URL="postgres://postgres:testpw@localhost:5432/${DB_NAME}" go test -v -cover
+PGX_TEST_DATABASE="host=/var/run/postgresql database=${DB_NAME}" DATABASE_URL="postgres://postgres:testpw@localhost:5432/${DB_NAME}" go test ./... -v -cover
 
 # cleanup 
 docker stop ${CONTAINER_NAME}
