@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: fuel-tracker-database
+  labels:
+    app: ft-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ft-database
+  template:
+    metadata:
+      labels:
+        app: ft-database
+    spec:
+      containers:
+      - image:  postgres:15.2
+        name: ft-database
+        ports:
+        - containerPort: 5432
+        volumeMounts:
+        - name: init-db
+          mountPath: /docker-entrypoint-initdb.d
+        env:
+          - name: POSTGRES_DB
+            value: fuel_tracker
+          - name: POSTGRES_USER
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: username
+          - name: POSTGRES_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: db-secret
+                key: password
+      volumes:
+      - name: init-db
+        configMap:
+          name: init-db-configmap

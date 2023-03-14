@@ -1,0 +1,42 @@
+apiVersion: v1
+data:
+  db-setup-01.sql: "CREATE FUNCTION trigger_set_timestamp()\nRETURNS TRIGGER AS $$\nBEGIN\n
+    \ NEW.updated_at = NOW();\n  RETURN NEW;\nEND;\n$$ LANGUAGE plpgsql;\n\nCREATE
+    FUNCTION trigger_insert_logic() \nRETURNS TRIGGER AS $$\n\ndeclare\nmileageCount
+    int;\n\ndeclare\ndateCount int;\n\ndeclare\nnotUsed int;\n\nBEGIN\n-- trigger
+    logic\n\nSELECT count(*) INTO mileageCount FROM refuel WHERE mileage > NEW.mileage
+    AND users_id = NEW.users_id AND license_plate = NEW.license_plate;\nSELECT count(*)
+    INTO dateCount FROM refuel WHERE date_time >= NEW.date_time AND users_id = NEW.users_id
+    AND license_plate = NEW.license_plate;\n\n\tIF mileageCount > dateCount THEN\n\t\tSELECT
+    setval('refuel_id_seq', currval('refuel_id_seq') - 1, true) INTO notUsed;\n\t\tRAISE
+    EXCEPTION 'Mileage has already been reached';\n\tEND IF;\n\tRETURN NEW;\nEND;\n$$
+    LANGUAGE PLPGSQL;\n\nCREATE TABLE IF NOT EXISTS users (\n    users_id                SERIAL
+    NOT NULL PRIMARY key,\n    username                varchar(30) NOT NULL,\n    pass_key
+    \               varchar(30) NOT NULL,\n    updated_at              TIMESTAMPTZ
+    NOT NULL DEFAULT NOW()\n);\n\nCREATE TABLE IF NOT EXISTS refuel (\n    id                      SERIAL
+    UNIQUE NOT NULL,\n    users_id                int,\n    description             varchar(50)
+    NOT NULL,\n    date_time               timestamp NOT NULL constraint realistic_date\n\t
+    \                                               CHECK ('1960-01-01 0:0:0' < date_time\n\t
+    \                                                      AND date_trunc('day', date_time)
+    <= CURRENT_DATE), \n    price_per_liter_euro    float8 NOT NULL constraint price_euro_zero_or_positive_and_realisitc\n\t
+    \                                            CHECK (price_per_liter_euro >= 0
+    AND price_per_liter_euro < 50),\n    total_liter             float8 NOT NULL constraint
+    total_liter_positive_and_realisitc CHECK (total_liter > 0 AND total_liter < 2000),\n
+    \   price_per_liter         float8 NOT NULL constraint price_zero_or_positive
+    CHECK (price_per_liter >= 0),\n    currency                varchar(12) NOT NULL,\n
+    \   mileage                 int NOT NULL constraint realistic_mileage CHECK (mileage
+    > 0 AND mileage < 1000000),\n    license_plate           varchar(15) NOT NULL,\n
+    \   updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n\tPRIMARY KEY
+    (license_plate, mileage),\n    constraint fk_users foreign key(users_id) references
+    users(users_id)\n);\n\nCREATE TRIGGER check_on_insert\nBEFORE INSERT OR UPDATE
+    ON refuel\nFOR EACH ROW\nEXECUTE FUNCTION trigger_insert_logic();\n\nCREATE TRIGGER
+    set_timestamp_refuel\nBEFORE UPDATE ON refuel\nFOR EACH ROW\nEXECUTE FUNCTION
+    trigger_set_timestamp();\n\nCREATE TRIGGER set_timestamp_users\nBEFORE UPDATE
+    ON users\nFOR EACH ROW\nEXECUTE FUNCTION trigger_set_timestamp();"
+kind: ConfigMap
+metadata:
+  creationTimestamp: "2023-02-25T20:16:16Z"
+  name: init-db-configmap
+  namespace: default
+  resourceVersion: "9953"
+  uid: fb742a44-da08-4c8f-aa46-7afe8e500ae7

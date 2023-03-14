@@ -25,8 +25,10 @@ var conn *pgxpool.Pool
 func InitDb() {
 	var err error
 
-	conn, err = pgxpool.Connect(context.Background(), os.Getenv("DATABASE_URL"))
-	config.Logger.Debug(os.Getenv("DATABASE_URL"))
+	var databaseUrl = "postgres://" + os.Getenv("DATABASE_USERNAME") + ":" + os.Getenv("DATABASE_PASSWORD") + "@" + os.Getenv("DATABASE_PATH")
+
+	conn, err = pgxpool.Connect(context.Background(), databaseUrl)
+	config.Logger.Debug(databaseUrl)
 	if err != nil {
 		config.Logger.Error("Unable to connect to database: %s", err.Error())
 		os.Exit(1)

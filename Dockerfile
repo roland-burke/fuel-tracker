@@ -15,10 +15,11 @@ COPY go.sum ./
 RUN go mod download
 
 # Copy files to workdir
-COPY *.go ./
+COPY cmd/ ./cmd
+COPY internal/ ./internal
 COPY config/${configFilePath} config/conf.json
 
-RUN go build
+RUN go build -o ./fuel-tracker ./cmd/main
 
 # Generate clean, final image for deployment
 FROM alpine:3.11.3

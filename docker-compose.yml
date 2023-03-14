@@ -28,7 +28,9 @@ services:
     build: "."
     container_name: ft-backend
     environment:
-      DATABASE_URL: "postgres://${PG_USERNAME}:${PG_PASSWORD}@fuel-tracker-database:5432/fuel_tracker"
+      DATABASE_PATH: "fuel-tracker-database:5432/fuel_tracker"
+      DATABASE_USERNAME: ${PG_USERNAME}
+      DATABASE_PASSWORD: ${PG_PASSWORD}
     restart: "always"
     depends_on:
       fuel-tracker-database:
