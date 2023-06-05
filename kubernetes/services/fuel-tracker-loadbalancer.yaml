@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"v1","kind":"Service","metadata":{"annotations":{},"creationTimestamp":"2023-03-14T20:46:37Z","labels":{"app":"fuel-tracker-loadbalancer"},"name":"fuel-tracker-loadbalancer","namespace":"default","resourceVersion":"27572","uid":"2b8654c6-2f7f-4676-8c38-c84a38eae4ec"},"spec":{"allocateLoadBalancerNodePorts":true,"clusterIP":"10.96.99.24","clusterIPs":["10.96.99.24"],"externalTrafficPolicy":"Cluster","internalTrafficPolicy":"Cluster","ipFamilies":["IPv4"],"ipFamilyPolicy":"SingleStack","ports":[{"name":"9006","nodePort":31858,"port":9006,"protocol":"TCP","targetPort":9006}],"selector":{"app":"fuel-tracker-loadbalancer"},"sessionAffinity":"None","type":"LoadBalancer"},"status":{"loadBalancer":{}}}
+  creationTimestamp: "2023-03-14T21:00:26Z"
+  labels:
+    app: fuel-tracker-loadbalancer
+  name: fuel-tracker-loadbalancer
+  namespace: default
+  resourceVersion: "28343"
+  uid: a9ae057f-aa8b-40b4-9eac-5738322e2e57
+spec:
+  allocateLoadBalancerNodePorts: true
+  clusterIP: 10.96.99.24
+  clusterIPs:
+  - 10.96.99.24
+  externalTrafficPolicy: Cluster
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - name: "9006"
+    nodePort: 31858
+    port: 9006
+    protocol: TCP
+    # Port to forward to inside the pod
+    targetPort: 9006
+  selector:
+    app: fuel-tracker-loadbalancer
+  sessionAffinity: None
+  type: LoadBalancer
+status:
+  loadBalancer: {}

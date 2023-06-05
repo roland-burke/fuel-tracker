@@ -3,14 +3,14 @@ kind: StatefulSet
 metadata:
   annotations:
     kubectl.kubernetes.io/last-applied-configuration: |
-      {"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"labels":{"app":"fuel-tracker-backend"},"name":"fuel-tracker-backend","namespace":"default"},"spec":{"replicas":1,"selector":{"matchLabels":{"app":"fuel-tracker-backend"}},"template":{"metadata":{"labels":{"app":"fuel-tracker-backend"}},"spec":{"containers":[{"env":[{"name":"FT_DESCRIPTION","value":"kube-dev"},{"name":"DATABASE_PATH","value":"$(FT_DATABASE_SERVICE_SERVICE_HOST):30432/fuel_tracker"},{"name":"DATABSE_USERNAME","valueFrom":{"secretKeyRef":{"key":"username","name":"db-secret"}}},{"name":"DATABSE_PASSWORD","valueFrom":{"secretKeyRef":{"key":"password","name":"db-secret"}}},{"name":"FT_API-KEY","valueFrom":{"secretKeyRef":{"key":"api-key","name":"fuel-tracker-api-key"}}}],"image":"ghcr.io/roland-burke/fuel-tracker-backend:0.0.2","name":"ft-backend","ports":[{"containerPort":80}]}],"imagePullSecrets":[{"name":"regcred"}]}}}}
+      {"apiVersion":"apps/v1","kind":"StatefulSet","metadata":{"annotations":{},"creationTimestamp":"2023-03-14T20:06:38Z","generation":5,"labels":{"app":"fuel-tracker-backend"},"name":"fuel-tracker-backend","namespace":"default","resourceVersion":"28306","uid":"415046ea-2e2e-46b5-a3c2-4a387f4b332f"},"spec":{"podManagementPolicy":"OrderedReady","replicas":1,"revisionHistoryLimit":10,"selector":{"matchLabels":{"app":"fuel-tracker-backend"}},"serviceName":"","template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":"2023-03-14T21:13:13+01:00"},"creationTimestamp":null,"labels":{"app":"fuel-tracker-backend"}},"spec":{"containers":[{"env":[{"name":"FT_DESCRIPTION","value":"kube-dev"},{"name":"DATABASE_PATH","value":"$(FT_DATABASE_SERVICE_SERVICE_HOST):30432/fuel_tracker"},{"name":"FT_PORT","value":"31858"},{"name":"DATABSE_USERNAME","valueFrom":{"secretKeyRef":{"key":"username","name":"db-secret"}}},{"name":"DATABSE_PASSWORD","valueFrom":{"secretKeyRef":{"key":"password","name":"db-secret"}}},{"name":"FT_API-KEY","valueFrom":{"secretKeyRef":{"key":"api-key","name":"fuel-tracker-api-key"}}}],"image":"ghcr.io/roland-burke/fuel-tracker-backend:0.0.3","imagePullPolicy":"IfNotPresent","name":"ft-backend","ports":[{"containerPort":80,"protocol":"TCP"}],"resources":{},"terminationMessagePath":"/dev/termination-log","terminationMessagePolicy":"File"}],"dnsPolicy":"ClusterFirst","imagePullSecrets":[{"name":"regcred"}],"restartPolicy":"Always","schedulerName":"default-scheduler","securityContext":{},"terminationGracePeriodSeconds":30}},"updateStrategy":{"rollingUpdate":{"partition":0},"type":"RollingUpdate"}},"status":{"availableReplicas":1,"collisionCount":0,"currentReplicas":1,"currentRevision":"fuel-tracker-backend-dbddbd7","observedGeneration":5,"readyReplicas":1,"replicas":1,"updateRevision":"fuel-tracker-backend-dbddbd7","updatedReplicas":1}}
   creationTimestamp: "2023-03-14T20:06:38Z"
-  generation: 4
+  generation: 6
   labels:
     app: fuel-tracker-backend
   name: fuel-tracker-backend
   namespace: default
-  resourceVersion: "25983"
+  resourceVersion: "28924"
   uid: 415046ea-2e2e-46b5-a3c2-4a387f4b332f
 spec:
   podManagementPolicy: OrderedReady
@@ -34,6 +34,8 @@ spec:
           value: kube-dev
         - name: DATABASE_PATH
           value: $(FT_DATABASE_SERVICE_SERVICE_HOST):30432/fuel_tracker
+        - name: FT_PORT
+          value: "9006"
         - name: DATABSE_USERNAME
           valueFrom:
             secretKeyRef:
@@ -70,10 +72,12 @@ spec:
       partition: 0
     type: RollingUpdate
 status:
-  availableReplicas: 0
+  availableReplicas: 1
   collisionCount: 0
-  currentRevision: fuel-tracker-backend-577597779f
-  observedGeneration: 4
+  currentReplicas: 1
+  currentRevision: fuel-tracker-backend-b567f65d6
+  observedGeneration: 6
+  readyReplicas: 1
   replicas: 1
-  updateRevision: fuel-tracker-backend-c46d9bc7d
+  updateRevision: fuel-tracker-backend-b567f65d6
   updatedReplicas: 1

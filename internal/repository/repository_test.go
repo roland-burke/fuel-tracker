@@ -12,7 +12,7 @@ import (
 
 func init() {
 	// Mute the logger
-	config.Logger = rollogger.Init(rollogger.ERROR_LEVEL, true, true)
+	config.Logger = rollogger.Init(rollogger.DEBUG_LEVEL, true, true)
 	InitDb()
 }
 
