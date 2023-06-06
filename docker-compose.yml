@@ -33,7 +33,7 @@ services:
       DATABASE_PASSWORD: ${PG_PASSWORD}
     restart: "always"
     volumes:
-      - "./config/${CONFIG_FILE}:/conf.json"
+      - "${PWD}/config/${CONFIG_FILE}:/conf.json"
     depends_on:
       fuel-tracker-database:
         condition: service_healthy
