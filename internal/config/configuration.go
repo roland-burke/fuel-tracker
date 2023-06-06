@@ -21,10 +21,10 @@ func InitConfig() (int, string) {
 	ApiKey = config.ApiKey
 	if ApiKey == "willbeoverwritten" || ApiKey == "CHANGEME" {
 		Logger.Warn("Invalid Apikey: %s\nEither it wasn't changed or something went wrong!\n", ApiKey)
-		os.Exit(1)
+		os.Exit(3)
 	} else if len(ApiKey) < API_KEY_MIN_LENGTH {
 		Logger.Warn("Apikey '%s' too short, must be at least %d characters long!\n", ApiKey, API_KEY_MIN_LENGTH)
-		os.Exit(1)
+		os.Exit(4)
 	}
 	printConfig(config)
 	return config.Port, config.UrlPrefix
@@ -64,6 +64,7 @@ func readConfig() model.Configuration {
 
 	if err != nil {
 		Logger.Error("Cannot open config file from '%s': %s", confPath, err.Error())
+		os.Exit(1)
 	}
 
 	decoder := json.NewDecoder(file)
@@ -71,6 +72,7 @@ func readConfig() model.Configuration {
 	err = decoder.Decode(&configuration)
 	if err != nil {
 		Logger.Error("Cannot decode config: %s", err.Error())
+		os.Exit(2)
 	}
 	return configuration
 }
