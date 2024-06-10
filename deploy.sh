@@ -12,6 +12,7 @@ DEV_BACKEND_CONFIG="conf.dev.json"
 # === REMOTE ===
 if [[ "$1" = "remote" ]]
 then
+    docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE pull
 	docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE build --no-cache
     docker-compose --context $REMOTE_CONTEXT_NAME --env-file $PROD_ENV_FILE up -d --force-recreate
 
